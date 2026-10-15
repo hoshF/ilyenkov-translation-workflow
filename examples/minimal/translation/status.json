@@ -1,0 +1,27 @@
+{
+  "groups": [
+    {
+      "group_id": "01-text",
+      "batches": [
+        {
+          "batch_id": "b01",
+          "units": [
+            "u001"
+          ],
+          "status": "untranslated",
+          "operator_commit": null,
+          "reviewer_commit": null
+        },
+        {
+          "batch_id": "b02",
+          "units": [
+            "u002"
+          ],
+          "status": "untranslated",
+          "operator_commit": null,
+          "reviewer_commit": null
+        }
+      ]
+    }
+  ]
+}

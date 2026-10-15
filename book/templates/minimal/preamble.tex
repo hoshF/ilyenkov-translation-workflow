@@ -1,0 +1,50 @@
+% 最小教学接收模板；仅实现 examples/minimal 展示的排版接口。
+% 字体由使用者的 TeX 环境提供，不随本项目分发。
+\usepackage{fontspec}
+\setmainfont{cmunrm.otf}[
+  BoldFont=cmunbx.otf,
+  ItalicFont=cmunti.otf,
+  BoldItalicFont=cmunbi.otf
+]
+% Cyrillic 作为 CJK 子块随语义族切换，显式选择比例字体，避免中文字体的全角字形。
+\xeCJKDeclareSubCJKBlock{Cyrillic}{"0400 -> "052F, "2DE0 -> "2DFF, "A640 -> "A69F}
+\xeCJKsetup{CJKspace=true}
+\setCJKmainfont{FandolSong-Regular.otf}[
+  BoldFont=FandolHei-Bold.otf,
+  ItalicFont=FandolSong-Regular.otf,
+  BoldItalicFont=FandolHei-Bold.otf,
+  Cyrillic={[
+    BoldFont=cmunbx.otf,
+    ItalicFont=cmunrm.otf,
+    BoldItalicFont=cmunbx.otf
+  ]cmunrm.otf}
+]
+% 显式指定黑体字重，不以假粗或倾斜宋体实现正文强调。
+\setCJKfamilyfont{examplehei}{FandolHei-Bold.otf}[
+  BoldFont=FandolHei-Bold.otf,
+  ItalicFont=FandolHei-Bold.otf,
+  BoldItalicFont=FandolHei-Bold.otf,
+  Cyrillic={[
+    BoldFont=cmunsx.otf,
+    ItalicFont=cmunsx.otf,
+    BoldItalicFont=cmunsx.otf
+  ]cmunsx.otf}
+]
+\setCJKfamilyfont{examplekai}{FandolKai-Regular.otf}[
+  BoldFont=FandolKai-Regular.otf,
+  ItalicFont=FandolKai-Regular.otf,
+  BoldItalicFont=FandolKai-Regular.otf,
+  Cyrillic={[
+    BoldFont=cmunti.otf,
+    ItalicFont=cmunti.otf,
+    BoldItalicFont=cmunti.otf
+  ]cmunti.otf}
+]
+% 楷体语义族的比例 Cyrillic 使用 CMU Serif Italic，仅作教学实现。
+% Latin 由主字体的 Italic/Bold 字面处理。
+\newcommand{\bookemph}[1]{{\CJKfamily{examplehei}\itshape #1}}
+\newcommand{\bookstrong}[1]{{\CJKfamily{examplehei}\bfseries #1}}
+\newcommand{\bookapparatus}[1]{{\CJKfamily{examplekai}\itshape #1}}
+\newcommand{\footnoteemph}[1]{{\CJKfamily{examplekai}\itshape #1}}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.3em}

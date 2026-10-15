@@ -1,0 +1,33 @@
+# Local environment and credentials
+.local/
+.env
+.env.*
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Generated outputs
+*.aux
+*.log
+*.out
+*.toc
+*.xdv
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.pdf
+*.draft.tex
+
+# Local work and temporary files
+tmp/
+*.tmp
+*.bak
+*.swp
+.DS_Store

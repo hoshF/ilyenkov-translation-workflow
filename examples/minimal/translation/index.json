@@ -1,0 +1,25 @@
+{
+  "title": "Наблюдение и сопоставление",
+  "source_edition": "教学示例初稿（未作最终验收）",
+  "groups": [
+    {
+      "id": "text",
+      "label": "教学短文",
+      "dir": "01-text",
+      "units": [
+        {
+          "unit_id": "u001",
+          "title": "Наблюдение",
+          "part": "Наблюдение",
+          "file": "01-text/u001-observation.md"
+        },
+        {
+          "unit_id": "u002",
+          "title": "Сопоставление",
+          "part": "Сопоставление",
+          "file": "01-text/u002-comparison.md"
+        }
+      ]
+    }
+  ]
+}

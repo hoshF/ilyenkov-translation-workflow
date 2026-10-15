@@ -1,0 +1,30 @@
+[
+  {
+    "id": "example-observation",
+    "canonical": "наблюдение",
+    "forms": [
+      "наблюдение",
+      "наблюдения",
+      "наблюдением"
+    ],
+    "zh_preferred": "观察",
+    "zh_alternatives": [],
+    "status": "provisional",
+    "notes": ""
+  },
+  {
+    "id": "example-comparison",
+    "canonical": "сопоставление",
+    "forms": [
+      "сопоставление",
+      "сопоставления",
+      "сопоставлению"
+    ],
+    "zh_preferred": "比较",
+    "zh_alternatives": [
+      "对照"
+    ],
+    "status": "provisional",
+    "notes": ""
+  }
+]
