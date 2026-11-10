@@ -70,7 +70,7 @@ human_verified
   work.json
   <work-id>.md
   <图片文件>
-  source-issues.json  # 存在未决疑难时
+  source-issues.json  # 存在疑难时建立；疑难解决后保留处理记录
 ```
 
 临时处理：
@@ -154,6 +154,10 @@ human_verified
 - 多栏页面的实际阅读顺序；
 - 标题、列表、引文、脚注和图注的语义结构。
 
+行末连字符依 [`DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md`](DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) 第 2 步的行末连字符规则判定。
+
+外形相同的异文种字符按所在词的文种改正，只替换确认错误的字符，不改拼写、转写体系、大小写或标点。
+
 不得静默改写、翻译、现代化拼写、校正事实或补齐无法确认的文字。无法确认的内容写入
 `source-issues.json`，每条至少包含 `id`、`source_quote`、`issue` 和 `handling`：
 
@@ -216,11 +220,17 @@ human_verified
 
 已确定的底本缺字、缺注或排印错误无法恢复时，忠实保留原貌，在 `source-issues.json` 写明依据和处理结论，不补造内容。
 
+明显的底本排印错误经 Owner 裁决可以校正：
+
+- 人名、题名、著录信息和转写先核实再改；
+- 无法核实的保留原貌并单独列出，不作推测性校正；
+- 每处校正在 `source-issues.json` 记录底本原貌、页码、改正形式与依据。
+
 最终验收检查底本身份、处理范围、疑难结论、正文结构、图片、元数据和登记。Owner 可明确接受保留已确定的底本缺陷；该结论不代替未完成的页面核验。全部通过并获 Owner 明确验收后写入 `human_verified`。
 
 ## 第 8 步——整理正式工件
 
-1. 正式目录保留 `<work-id>.md`、`work.json`、全部被引用图片，以及存在未决疑难时的 `source-issues.json`。
+1. 正式目录保留 `<work-id>.md`、`work.json`、全部被引用图片，以及已建立的 `source-issues.json`。
 2. 页面渲染、OCR 原始输出、逐页候选文本和比较结果保留在临时目录。
 3. 检查正式目录中的相对图片路径。
 

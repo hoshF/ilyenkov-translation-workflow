@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import difflib
 import hashlib
 import json
@@ -211,8 +212,9 @@ NOTE_START = re.compile(r"^\s*(?:\*{1,5}\s|(?:\d{1,3}|[IVXLC]{1,6})[.)]\s)")
 MARK_STAR = re.compile(r"^\s*\*{1,5}")                      # 行首真星号：最强证据
 MARK_ODD = re.compile(r"^\s*[\^\\`'|•·~\"]{1,3}\s?")      # 星号被认成 ^ \ ` ' | • · ~ " 的误形
 # 悬挂缩进条目：左界上以注号／编号起首的行（尾注区、编号注一类）
+NOTE_CONT = re.compile(r"^\s*[«„\"(—–-]?\s*[а-яёa-z]")      # 从句中接续的行：小写起首
 LIST_MARK = re.compile(r"^(?:\d{1,3}\.|\d{1,2}\)|[1-9]|[IVXLC]{1,6}[.)]?)\s+[А-ЯЁA-Z]")
-NOTE_MARK_STRIP = re.compile(r"^(?:\*{1,5}\s*|[\^\\`'|]{1,2}\s+)")  # 注文首部的注标不留进正文
+NOTE_MARK_STRIP = re.compile(r"^(?:\*+\s*|[\^\\`'|]{1,2}\s+)")  # 注文首部的注标不留进正文
 HEAD_GAP, HEAD_CW = 1.4, 1.10       # 标题：上下空档倍数、字号倍数
 
 
@@ -299,7 +301,7 @@ class Book:
         if lines and self._odd_first_line(lines, m, n):
             lines[0] = dict(lines[0], x0=m["left"])
             m = page_metrics(lines)
-        body, notes = self._split_footnotes(lines, m)
+        body, notes = self._split_footnotes(lines, m, n)
         m = page_metrics(body) if body else m
         rec = {"n": n, "body": body, "notes": notes, "header": header, **m}
         rec["clusters"] = self._indent_clusters(body, m)
@@ -328,7 +330,7 @@ class Book:
         for r in self._cache.values():
             r["indent"] = self.indent
 
-    def _split_footnotes(self, lines: list[dict], m: dict) -> tuple[list[dict], list[dict]]:
+    def _split_footnotes(self, lines: list[dict], m: dict, n: int) -> tuple[list[dict], list[dict]]:
         """页下注区判定：多信号合议。
 
         自底向上取第一个大空档，其下须同时满足——末行贴近下沿；行首多半与正文左界
@@ -357,11 +359,18 @@ class Book:
             smaller = (statistics.median([char_width(l) for l in cand])
                        < FN_CW * statistics.median([char_width(l) for l in full]))
             # 注区行首星号是强证据，字号不论；只凭字号这一条时，还须正文里确有星号注标，
-            # 否则«Примечания»、书目、作者名录一类小字正文小节会被误当页下注。
-            if not (area_stars or (body_stars and smaller)):
+            # 或该块从句中接续上一页的星号注，否则«Примечания»、书目、作者名录一类小字
+            # 正文小节会被误当页下注。
+            if not (area_stars or (smaller and (body_stars or (NOTE_CONT.match(cand[0]["text"])
+                                                              and self._starred_notes(n - 1))))):
                 break
             return rest, cand
         return lines, []
+
+    def _starred_notes(self, n: int) -> bool:
+        """该页文字层有以星号起首的行，即有页下注。"""
+        f = self.dir / "txt" / f"{n:03d}.txt"
+        return f.exists() and any(MARK_STAR.match(l) for l in f.read_text(encoding="utf-8").splitlines())
 
     @staticmethod
     def _indent_clusters(body: list[dict], m: dict) -> list[list[int]]:
@@ -463,8 +472,11 @@ def _classify(body: list[dict], cls: list[list[int]], m: dict, ind: float) -> di
     return kind
 
 
-def page_blocks(rec: dict) -> list[dict]:
-    """一页切成 head / para / quote 三种块。"""
+def page_blocks(rec: dict, standalone: bool = True, entries: bool = True) -> list[dict]:
+    """一页切成 head / para / quote 三种块。
+
+    `standalone`、`entries` 分别控制独立行与悬挂条目两条判据，由 units.json 按书关闭。
+    """
     body, m = rec["body"], rec
     if not body:
         return []
@@ -516,8 +528,8 @@ def page_blocks(rec: dict) -> list[dict]:
                 out.append({"kind": "quote", "lines": [l]})
                 hanging = False
             else:
-                alone = is_standalone_line(l["text"])
-                mark = bool(k == "body" and LIST_MARK.match(l["text"]))
+                alone = standalone and is_standalone_line(l["text"])
+                mark = bool(entries and k == "body" and LIST_MARK.match(l["text"]))
                 # 悬挂条目起首（左界上的编号行）另起一段；其缩进续行并入该条，不再另起
                 if (alone or mark or (k == "indent" and not hanging)
                         or not out or brk or out[-1]["kind"] != "para"):
@@ -602,15 +614,54 @@ def normalize_ru(s: str, log: dict) -> str:
 # ---------------------------------------------------------------- 断词接合
 
 ORTHO = re.compile(r"^(то|либо|нибудь|таки)$", re.I)
+ORDINAL = re.compile(r"^(первых|вторых|третьих|четв[её]ртых|пятых)$", re.I)
+ADJ_END = re.compile(r"(ый|ий|ой|ая|яя|ое|ее|ые|ие|ого|его|ому|ему|ым|им|ых|их|ую|юю|ей)$")
+LINE_BREAK = re.compile(r"\w*[-¬][ \t]*\n[ \t]*\w*")
 
 
-def inline_hyphens(work: Path) -> set[tuple[str, str]]:
-    """全书行内出现过的带连字符写法，供接合时查。"""
-    seen = set()
-    for f in sorted((work / "txt").glob("*.txt")):
-        for m in re.finditer(r"(\w+)-(\w+)", f.read_text(encoding="utf-8"), re.UNICODE):
-            seen.add((m.group(1).lower(), m.group(2).lower()))
-    return seen
+class Hyphenation:
+    """行末断词的判定依据：同单元的行内写法，全书行内的词形与带连字符写法。
+
+    `unit`、`page` 由重建过程随单元、页面更新；判不了而保留连字符的记入 `pending`。
+    """
+
+    def __init__(self, work: Path, units: list[dict]):
+        pages = {}
+        for f in sorted((work / "txt").glob("*.txt")):
+            pages[int(f.stem)] = LINE_BREAK.sub(" ", f.read_text(encoding="utf-8")).lower()
+        self.words = collections.Counter(m for t in pages.values()
+                                         for m in re.findall(r"(?<![\w-])\w+(?![\w-])", t))
+        self.book = {p for t in pages.values() for p in re.findall(r"(\w+)-(\w+)", t)}
+        self.units = {}
+        for u in units:
+            t = "\n".join(pages.get(n, "") for n in range(u["first"], u["last"] + 1))
+            self.units[u["unit"]] = (set(re.findall(r"(\w+)-(\w+)", t)), set(re.findall(r"\w+", t)))
+        self.unit: str | None = None
+        self.page: int | None = None
+        self.pending: list[tuple[int | None, str, str]] = []
+
+    def compound(self, l: str, r: str) -> bool:
+        """带连字符的写法可能成立：副词或 -ико 词干加形容词词尾的复合形容词。"""
+        return bool(ADJ_END.search(r)) and (
+            (self.words[l] >= 2 and self.words[r] >= 2 and l[-1] in "ое" and len(l) >= 4)
+            or (len(l) >= 6 and l.endswith("ико")))
+
+    def keeps(self, l: str, r: str) -> bool:
+        """是否保留连字符。依次看：同单元写法、构词与语法、复合词可能；都判不了的保留并记待核。"""
+        if l[-1:].isdigit() and r[:1].isdigit():
+            return True
+        hyph, words = self.units.get(self.unit, (set(), set()))
+        h, w = (l, r) in hyph, l + r in words
+        if h != w:
+            return h
+        if not h and ORTHO.match(r) and self.words[l] and not self.words[l + r]:
+            return True
+        if not h and (l in ("кое", "кой") or (l == "во" and ORDINAL.match(r))):
+            return True
+        if h or (ORTHO.match(r) and self.words[l]) or (l, r) in self.book or self.compound(l, r):
+            self.pending.append((self.page, l, r))
+            return True
+        return False
 
 
 BREAK_TAIL = "-\u00ac"          # 行末断词的连接符：连字符，以及文字层用 ¬ 表示的那种
@@ -621,9 +672,8 @@ def ends_break(s: str) -> bool:
     return bool(s) and s[-1] in BREAK_TAIL
 
 
-def join_hyphen(a: str, b: str, seen: set, keep: dict[tuple[str, str], str]) -> str:
-    """a 以行末断词连接符（`-` 或 `¬`）结尾。默认去掉连接符接合，例外则保留连字符。"""
-    mark = a[-1]
+def join_hyphen(a: str, b: str, seen: "Hyphenation", keep: dict[tuple[str, str], str]) -> str:
+    """a 以行末断词连接符（`-` 或 `¬`）结尾。按 `Hyphenation.keeps` 保留连字符，否则去掉连接符接合。"""
     head = a[:-1]
     lw = re.search(r"(\w+)$", head, re.UNICODE)
     rw = re.match(r"(\w+)", b, re.UNICODE)
@@ -631,14 +681,12 @@ def join_hyphen(a: str, b: str, seen: set, keep: dict[tuple[str, str], str]) -> 
         l, r = lw.group(1).lower(), rw.group(1).lower()
         if (l, r) in keep:                       # 经页面图像确认的，按给定字符接
             return head + keep[(l, r)] + b
-        if (l, r) in seen or ORTHO.match(r):
+        if seen.keeps(l, r):
             return head + "-" + b                # 保留连字符；连接符一律归为 `-`
-        if l[-1:].isdigit() and r[:1].isdigit():
-            return head + "-" + b
     return head + b
 
 
-def block_text(block: dict, seen: set, keep: dict, metrics: dict | None = None) -> str:
+def block_text(block: dict, seen: "Hyphenation", keep: dict, metrics: dict | None = None) -> str:
     """块内各行接成一段；诗行、题署一类保留换行。
 
     内缩块按散文合并的条件：各行 x0 齐平；除末行外右端都抵同一右界；整块占满版心宽度。
@@ -678,7 +726,7 @@ def note_start(l: dict, rec: dict) -> bool:
     return l["x0"] > rec["left"] + 1.2 * ind
 
 
-def page_notes(rec: dict, seen: set, keep: dict) -> tuple[bool, list[str]]:
+def page_notes(rec: dict, seen: "Hyphenation", keep: dict) -> tuple[bool, list[str]]:
     """注区切条：注标起首或明显内缩的行开新条，无新注标的后续行并入当前条。
 
     页内正文注标数作约束：候选界多于注标数时，先并掉既未内缩、行首也无注标的弱界；
@@ -812,7 +860,7 @@ def _norm(s: str) -> str:
     return "".join(ch for ch in s if ch.isalpha())
 
 
-def build_unit(book: "Book", u: dict, seen: set, keep: dict, tables: dict,
+def build_unit(book: "Book", u: dict, seen: "Hyphenation", keep: dict, tables: dict,
                issues: list, section: str | None = None, figures: list | None = None
                ) -> tuple[list[tuple[str, str]], list[str], dict, int]:
     """单元正文。篇首页面上的题名、署名、部题已由 `# 题名` 与署名行代表，不重复进正文。
@@ -829,6 +877,7 @@ def build_unit(book: "Book", u: dict, seen: set, keep: dict, tables: dict,
     akey = _norm(u.get("author") or "\0")
     seq = 0
     for n in range(u["first"], u["last"] + 1):
+        seen.page = n
         rec = book.page(n)
         cont, nts = page_notes(rec, seen, keep)
         if cont and nts and notes:
@@ -864,7 +913,7 @@ def build_unit(book: "Book", u: dict, seen: set, keep: dict, tables: dict,
 
         tb = tables.get(str(n))
         skip = {int(r["page"]): r["table_below"] for t in tables.values() for r in t["regions"]}
-        groups = page_blocks(rec)
+        groups = page_blocks(rec, book.standalone_lines, book.numbered_entries)
         if n in skip:
             groups = [g for g in groups if all(l["y1"] > skip[n] for l in g["lines"])]
         cols = split_columns(rec["body"], rec) if not rec["notes"] else None
@@ -1140,6 +1189,8 @@ def rebuild(args, resource_root: Path) -> bool:
     page_offset = parse_page_offset(spec.get("page_offset", spec.get("offset", 0)))
     excluded = parse_excluded(spec.get("excluded_pages"))
     book = Book(args.work, page_offset, fixes, args.normalize, excluded)
+    book.standalone_lines = spec.get("standalone_lines", True)
+    book.numbered_entries = spec.get("numbered_entries", True)
     book.log = {}
     book.measure(sorted({n for u in spec["units"] for n in range(u["first"], u["last"] + 1)}))
     print(f"全书段首缩进 {book.indent:.0f} px")
@@ -1147,7 +1198,7 @@ def rebuild(args, resource_root: Path) -> bool:
         print(f"无文字层、不参与正文的页：{sorted(book.missing)}")
     if book.excluded_hit:
         print(f"不进入正文的页（照片插页等）：{sorted(book.excluded_hit)}")
-    seen = inline_hyphens(args.work)
+    seen = Hyphenation(args.work, spec["units"])
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
     issues, rows, links = [], [], []
@@ -1155,6 +1206,7 @@ def rebuild(args, resource_root: Path) -> bool:
     dropped: dict[str, int] = {}
 
     for u in spec["units"]:
+        seen.unit = u["unit"]
         if u.get("kind") == "toc":
             toc, dropped[u["unit"]] = build_toc(book, u)
             blocks = [("para", t) for t in toc]
@@ -1200,6 +1252,10 @@ def rebuild(args, resource_root: Path) -> bool:
         print("\n注标数与注释条数不等的页（注标原样保留，须写入 source-issues.json）：")
         for it in issues:
             print(f"  P{it['page']} 注标={it['marks']} 注释={it['notes']}")
+    if seen.pending:
+        print("\n行末连字符判不了、已保留连字符的（须写入 source-issues.json，第 7 步核对）：")
+        for n, l, r in seen.pending:
+            print(f"  P{n}（印张 {printed_page(book.page_offset, n) if n else '—'}） {l}-{r}")
     return verify(out, book, spec, dropped, resource_root)
 
 
@@ -1377,6 +1433,8 @@ sections     [{"dir": "02-slug", "title": "I. ..."}, ...]。按此顺序与标�
 excluded_pages 不进入正文的文档页，[243, 244] 或 ["243-258"]。无页码照片插页、扉页一类
              属底本载体的整页内容列在这里：页虽落在某单元范围内，正文不含其文字。
              图片按第 5 步另行交付，图注随图块照录。
+standalone_lines  false 时不把整行日期、称呼另立为块；该书版面无此类独立行时关闭。
+numbered_entries  false 时左界编号行不作悬挂条目起首；该书编号条目首行缩进、续行顶格时关闭。
 fixes.json   [{"scope": "line"|"block", "pattern": 正则, "replace": 替换, "label": 统计名,
                "literal": true 表示按字面而非正则}]
 tables.json  [{"insert_after_page": 文档页, "header": [栏名...], "caption": [题注行...],

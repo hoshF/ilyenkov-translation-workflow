@@ -14,8 +14,10 @@ r"""把一份译文 Markdown 转成 LaTeX 章节文件。
 * 数字注（--numeric-notes）     —— 正文里的裸数字注号与文末 `N 注文` 块，同样转成脚注
 * `* * *`                       —— \bookseparator
 * 行首 `- ` 与 `> `             —— \bookitem{} 与 \booknote{}
-* 连续下划线                    —— \bookinlinerule（手稿分隔线，非字面下划线）
+* 连续下划线                    —— 默认按字面输出；--inline-rule 显式确认的完整字符序列转为 \bookinlinerule
 * `![说明](assets/…)`           —— \bookfigure{}（就地插入；说明文字不输出）
+* `[文字](https://…)`           —— \href{}{}；文字与地址相同时用 \url{}
+* `\*` 等 Markdown 转义        —— 对应可见字符，不输出转义反斜杠
 * 段落                          —— 逐块输出
 
 样式记号到语义命令的分流依 `book/TYPESETTING.md` 第二、三节。发言人标签与人物志词头
@@ -45,7 +47,7 @@ import tempfile
 from pathlib import Path
 
 
-def blocks_of(path: Path) -> list[str]:
+def blocks_of(path: Path, locations: list[str] | None = None) -> list[str]:
     """按 `<!-- block-id: bNNNNNN -->` 锚点切块；无锚点时按空行分段。"""
     text = path.read_text(encoding="utf-8")
     # 不换行连字符 U+2011 是底本转换留下的技术字符，正文西文字体没有这个字形，
@@ -55,11 +57,22 @@ def blocks_of(path: Path) -> list[str]:
     body = text[front.end():] if front else text
     marks = list(re.finditer(r"(?m)^<!-- block-id: b\d{6} -->\s*$", body))
     if marks:
-        return [
+        blocks = [
             body[m.end():(marks[i + 1].start() if i + 1 < len(marks) else len(body))].strip()
             for i, m in enumerate(marks)
         ]
-    return [b.strip() for b in re.split(r"\n\s*\n", body) if b.strip()]
+    else:
+        blocks = [b.strip() for b in re.split(r"\n\s*\n", body) if b.strip()]
+    if locations is not None:
+        cursor = front.end() if front else 0
+        for block in blocks:
+            offset = text.find(block, cursor)
+            line = text.count("\n", 0, offset) + 1
+            anchors = list(re.finditer(r"<!-- block-id: (b\d{6}) -->", text[cursor:offset]))
+            anchor = f" ({anchors[-1].group(1)})" if anchors else ""
+            locations.append(f"{path}:{line}{anchor}")
+            cursor = offset + len(block)
+    return blocks
 
 
 # LaTeX 特殊字符转义（中文正文里主要是这几个会出问题）。
@@ -131,8 +144,53 @@ def strong_command(inner: str, speaker: bool, entry: bool) -> str:
     return r"\bookstrong{"
 
 
-def convert_styles(text: str, speaker: bool = False, entry: bool = False) -> str:
+def mark_inline_rules(text: str, inline_rules: tuple[str, ...]) -> str:
+    """按完整可见序列确认横线；含转义下划线的整段保持字面。"""
+    confirmed = set(inline_rules)
+    return re.sub(
+        r"(?:\\_|_)+|\\[\\`*_{}\[\]()#+\-.!>~]",
+        lambda match: "\0RULE\0" if match.group() in confirmed else match.group(),
+        text,
+    )
+
+
+def convert_styles(text: str, speaker: bool = False, entry: bool = False,
+                   inline_rules: tuple[str, ...] = ()) -> str:
     """只做样式记号 → 语义命令，不碰脚注。标题与正文共用，标题里的样式才不会漏转。"""
+    text = re.sub(r"<em>(.*?)</em>", r"*\1*", text, flags=re.S | re.I)
+    text = re.sub(r"<strong>(.*?)</strong>", r"**\1**", text, flags=re.S | re.I)
+    text = re.sub(r"<br\s*/?>", "\0HTMLBREAK\0", text, flags=re.I)
+    links: list[tuple[str, str]] = []
+
+    def stash_link(match: re.Match) -> str:
+        links.append((match.group(1), match.group(2)))
+        return f"\0LINK{len(links) - 1}\0"
+
+    text = re.sub(r"(?<!!)\[([^\]\n]+)\]\((https?://[^\s)]+)\)", stash_link, text)
+
+    def stash_autolink(match: re.Match) -> str:
+        target = match.group(1)
+        links.append((target, target))
+        return f"\0LINK{len(links) - 1}\0"
+
+    text = re.sub(r"<((?:https?://|www\.)[^<>\s]+)>", stash_autolink, text)
+    def stash_bare_link(match: re.Match) -> str:
+        target = match.group(1)
+        clean = target.rstrip(".,;:!?)")
+        links.append((clean, clean))
+        return f"\0LINK{len(links) - 1}\0" + target[len(clean):]
+
+    text = re.sub(r"(?<![A-Za-z0-9/])((?:https?://|www\.)[A-Za-z0-9./_~#?=&%:+–-]+)",
+                  stash_bare_link, text)
+    text = mark_inline_rules(text, inline_rules)
+    literals: list[str] = []
+
+    def stash_literal(match: re.Match) -> str:
+        literals.append(match.group(1))
+        return f"\0LITERAL{len(literals) - 1}\0"
+
+    text = re.sub(r"\\([\\`*_{}\[\]()#+\-.!>~])", stash_literal, text)
+
     # 行尾反斜杠是强制换行（诗行）。先占位：escape 会把反斜杠换成 \textbackslash{}。
     text = re.sub(r"\\\n", "\0BREAK\0\n", text)
 
@@ -162,12 +220,9 @@ def convert_styles(text: str, speaker: bool = False, entry: bool = False) -> str
 
     text = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", stash_emph, text)
 
-    # 手稿分隔线：下划线个数只表示画了一条线，不表示线长，故先占位再换成定长命令
-    text = re.sub(r"_{5,}", "\0RULE\0", text)
-
     text = escape(text)
 
-    text = text.replace("\0RULE\0", r"\bookinlinerule ")
+    text = text.replace("\0HTMLBREAK\0", r"\newline ")
     text = text.replace("\0BREAK\0", r"\\")
 
     # 粗斜体：底本兼有粗与斜两层。落在发言人、词头、署名这些结构上时，结构语义已经
@@ -186,82 +241,77 @@ def convert_styles(text: str, speaker: bool = False, entry: bool = False) -> str
     for i, inner in enumerate(emphs):
         command = r"\bookapparatus{" if is_apparatus(inner) else r"\bookemph{"
         text = text.replace(f"\0EMPH{i}\0", command + escape(inner) + "}")
-    return text
+    for i, literal in enumerate(literals):
+        text = text.replace(f"\0LITERAL{i}\0", escape(literal))
+    for i, (label, target) in enumerate(links):
+        if label == target:
+            link = r"\url{" + target + "}"
+        else:
+            link = r"\href{" + escape(target) + "}{" + convert_styles(label, inline_rules=inline_rules) + "}"
+        text = text.replace(f"\0LINK{i}\0", link)
+    # HTML 上下标是通用行内结构；样式转换后保留其内部文字与强调。
+    text = re.sub(r"<sup>(.*?)</sup>", lambda m: r"\textsuperscript{" + m.group(1) + "}", text, flags=re.S | re.I)
+    text = re.sub(r"<sub>(.*?)</sub>", lambda m: r"\textsubscript{" + m.group(1) + "}", text, flags=re.S | re.I)
+    return text.replace("\0RULE\0", r"\bookinlinerule ")
 
 
 def convert_inline(
     text: str,
-    footnotes: dict[str, str],
+    footnotes: dict[str, str | None],
     report: list[str],
     unresolved: list[str],
     speaker: bool = False,
     entry: bool = False,
+    seen_refs: dict[str, str] | None = None,
+    location: str = "",
+    inline_rules: tuple[str, ...] = (),
 ) -> str:
+    if seen_refs is None:
+        seen_refs = {}
     # 先抽出脚注标记，占位，避免正文转义碰到 [^…]
-    marks: list[str] = []
+    marks: list[tuple[str, int]] = []
 
     def stash_mark(match: re.Match) -> str:
-        marks.append(match.group(1))
+        marks.append((match.group(1), text.count("\n", 0, match.start())))
         return f"\0MARK{len(marks) - 1}\0"
 
     text = re.sub(r"\[\^([A-Za-z0-9._-]+)\](?!:)", stash_mark, text)
 
-    text = convert_styles(text, speaker, entry)
+    text = convert_styles(text, speaker, entry, inline_rules)
 
     # 还原脚注：把定义就地嵌入
-    for i, fid in enumerate(marks):
+    for i, (fid, line_offset) in enumerate(marks):
+        where = f"{location}（块内行 +{line_offset}）"
         body = footnotes.get(fid)
-        if body is None:
-            unresolved.append(f"本单元中脚注 [^{fid}] 无定义，须核对是否需跨单元或作品级处理")
-            replacement = f"[^{fid}]"  # 不完整草稿保留定位记号，正常输出由入口阻止
+        if fid in seen_refs:
+            unresolved.append(f"[待人工确认] {where}: 脚注 [^{fid}] 重复引用；首次引用在 {seen_refs[fid]}，须核对复用注号或作品级处理")
+            replacement = f"[^{fid}]"
+        elif body is None:
+            if fid not in footnotes:
+                unresolved.append(f"[阻断错误] {where}: 脚注 [^{fid}] 无定义，须核对是否需跨单元或作品级处理")
+            replacement = f"[^{fid}]"  # 缺失或定义有冲突时保留引用，不选择某条注文。
         else:
-            replacement = r"\footnote{" + convert_footnote(body, footnotes, report) + "}"
+            replacement = r"\footnote{" + convert_footnote(body, footnotes, report, inline_rules) + "}"
+        seen_refs.setdefault(fid, where)
         text = text.replace(f"\0MARK{i}\0", replacement)
     return text
 
 
-def convert_footnote(body: str, footnotes: dict[str, str], report: list[str]) -> str:
-    """脚注里的强调另走 \footnoteemph。
-
-    脚注斜体可能表示文献著录或引文内强调。转换为独立的语义命令，
-    由接收模板依 book/TYPESETTING.md 确定具体视觉实现。
-    """
-    # 脚注正文自身可能含强调；此处不递归脚注。
-    body = body.strip()
-    strongs: list[str] = []
-    body = re.sub(
-        r"\*\*(.+?)\*\*",
-        lambda m: strongs.append(m.group(1)) or f"\0S{len(strongs) - 1}\0",
-        body,
-    )
-    emphs: list[str] = []
-    body = re.sub(
-        r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)",
-        lambda m: emphs.append(m.group(1)) or f"\0E{len(emphs) - 1}\0",
-        body,
-    )
-    body = escape(body)
-    for i, inner in enumerate(emphs):
-        body = body.replace(f"\0E{i}\0", r"\footnoteemph{" + escape(inner) + "}")
-    for i, inner in enumerate(strongs):
-        body = body.replace(f"\0S{i}\0", r"\bookstrong{" + escape(inner) + "}")
-    # 多段注文以 \0PAR\0 相连（见 split_numeric_notes）
-    return body.replace("\0PAR\0", r"\par ")
+def convert_footnote(body: str, footnotes: dict[str, str | None], report: list[str],
+                     inline_rules: tuple[str, ...] = ()) -> str:
+    """脚注与正文使用同一套行内语义；附属著录由结构判别。"""
+    return convert_styles(body.strip(), inline_rules=inline_rules).replace("\0PAR\0", r"\par ")
 
 
-def parse_footnote_block(text: str) -> dict[str, str]:
-    """一个块里的全部脚注定义。
-
-    一个块可以放**多条**：底本的脚注与译者补的 `[^zh-N]` 常并在同一块，因为译注没有
-    自己的源块、不能另起锚点。原先用 re.S 一次匹配整块，`.*` 会把后一条定义吃进前一条的
-    注文里，后一条于是「无定义」——转换器会报出来（不是静默丢弃），但书里那条译注就没了。
-    """
-    found: dict[str, str] = {}
-    for part in re.split(r"\n(?=\[\^[A-Za-z0-9._-]+\]:)", text):
-        match = re.match(r"^\[\^([A-Za-z0-9._-]+)\]:\s*(.*)$", part.strip(), re.S)
-        if match:
-            found[match.group(1)] = match.group(2).strip()
-    return found
+def parse_footnote_block(text: str) -> list[tuple[str, str, int]]:
+    """按源顺序保留所有定义及其块内行号，重复标识交由汇总环节诊断。"""
+    starts = list(re.finditer(r"(?m)^\[\^([A-Za-z0-9._-]+)\]:[ \t]*", text))
+    return [
+        (match.group(1), text[match.end():starts[i + 1].start()
+         if i + 1 < len(starts) else len(text)].strip(),
+         text.count("\n", 0, match.start()))
+        for i, match in enumerate(starts)
+    ]
 
 
 NUMERIC_DEF = re.compile(r"\A(\d{1,3}) +(\S.*)\Z", re.S)
@@ -325,18 +375,33 @@ def mark_numeric_refs(blocks: list[str], count: int, unresolved: list[str]) -> l
 
 def convert(
     path: Path, speaker_labels: bool = False, entry_headwords: bool = False,
-    numeric_notes: bool = False,
+    numeric_notes: bool = False, inline_rules: tuple[str, ...] = (),
 ) -> tuple[str, list[str], list[str]]:
     report: list[str] = []
     unresolved: list[str] = []
-    body_blocks: list[tuple[str, bool, bool]] = []
-    footnotes: dict[str, str] = {}
-    raw_blocks = blocks_of(path)
+    if any(not re.fullmatch(r"_+", rule) for rule in inline_rules):
+        raise ValueError("已确认的横线必须是完整的连续下划线序列")
+    body_blocks: list[tuple[str, bool, bool, str]] = []
+    footnotes: dict[str, str | None] = {}
+    definition_locations: dict[str, str] = {}
+    definition_blocks: list[tuple[int, str]] = []
+    seen_refs: dict[str, str] = {}
+    title_refs: set[str] = set()
+    locations: list[str] = []
+    raw_blocks = blocks_of(path, locations)
+    numeric_source: list[str] = []
     if numeric_notes:
+        original_blocks = raw_blocks
         raw_blocks, numbered = split_numeric_notes(raw_blocks, report, unresolved)
+        if numbered:
+            numeric_source = original_blocks[len(raw_blocks):]
         raw_blocks = mark_numeric_refs(raw_blocks, len(numbered), unresolved)
         footnotes.update({f"num-{k}": v for k, v in numbered.items()})
-    for raw in raw_blocks:
+        for raw, location in zip(original_blocks[len(raw_blocks):], locations[len(raw_blocks):]):
+            match = NUMERIC_DEF.match(COMMENT.sub("", raw).strip())
+            if match:
+                definition_locations[f"num-{match.group(1)}"] = location
+    for raw, location in zip(raw_blocks, locations):
         if not raw:
             continue
         # 块里的其余 HTML 注释是结构标记：先读，再剥；留着会被转义成正文字符。
@@ -347,13 +412,24 @@ def convert(
             continue
         # 一个块可以放**多条**脚注定义：底本的脚注与译者补的 `[^zh-N]` 常并在
         # 同一块，因为译注没有自己的源块、不能另起锚点。
-        if text.startswith("[^"):
-            footnotes.update(parse_footnote_block(text))
+        if re.match(r"^\[\^[A-Za-z0-9._-]+\]:", text):
+            definitions = parse_footnote_block(text)
+            definition_blocks.append((len(body_blocks), text))
+            for fid, body, offset in definitions:
+                where = f"{location}（块内行 +{offset}）"
+                if fid in footnotes:
+                    unresolved.append(f"[阻断错误] {where}: 脚注 [^{fid}] 重复定义；首次定义在 {definition_locations[fid]}，须人工处理全部定义")
+                    footnotes[fid] = None  # 冲突标记；全部定义原文仍按源顺序保留。
+                else:
+                    footnotes[fid] = body
+                    definition_locations[fid] = where
             continue
-        body_blocks.append((text, layered, quoted))
+        body_blocks.append((text, layered, quoted, location))
 
     out: list[str] = []
-    for text, layered, quoted in body_blocks:
+    output_positions: list[int] = []
+    for text, layered, quoted, location in body_blocks:
+        output_positions.append(len(out))
         # 带 text-layer 的块（档案出处、编者说明）与引用块不是发言记录，
         # 其中以冒号收尾的粗体是栏目标签，不是发言人。
         speaker = speaker_labels and not layered and not quoted
@@ -366,9 +442,13 @@ def convert(
             # 标题里的脚注只在数字注模式下就地嵌入：别的项目里标题上的 `[^id]` 定义
             # 可能在另一个单元，按正文那套处理会把它吞掉，故保持原样输出。
             if not numeric_notes and re.search(r"\[\^[A-Za-z0-9._-]+\]", title):
-                report.append("标题中的脚注标记保留，须在作品 .tex 中处理标题或跨单元注释")
-            body = (convert_inline(title, footnotes, report, unresolved, speaker, entry)
-                    if numeric_notes else convert_styles(title, speaker, entry))
+                ids = re.findall(r"\[\^([A-Za-z0-9._-]+)\]", title)
+                title_refs.update(ids)
+                report.append(f"[警告] {location}: 标题中的脚注标记 " +
+                              "、".join(f"[^{fid}]" for fid in ids) +
+                              " 保留，须在作品 .tex 中处理标题或跨单元注释")
+            body = (convert_inline(title, footnotes, report, unresolved, speaker, entry, seen_refs, location, inline_rules)
+                    if numeric_notes else convert_styles(title, speaker, entry, inline_rules))
             out.append(r"\section*{" + body + "}")
             continue
         match = SEPARATOR.match(text)
@@ -376,7 +456,7 @@ def convert(
             out.append(r"\bookseparator")
             rest = text[match.end():].strip()
             if rest:
-                out.append(convert_inline(rest, footnotes, report, unresolved, speaker, entry))
+                out.append(convert_inline(rest, footnotes, report, unresolved, speaker, entry, seen_refs, location, inline_rules))
             continue
         # 图片就地插入；记号里的说明文字不输出（图题另有正文块）
         image = IMAGE.match(text)
@@ -384,7 +464,28 @@ def convert(
             out.append(r"\bookfigure{assets/" + image.group(1) + "}")
             rest = text[image.end():].strip()          # 图题与图记号常在同一块
             if rest:
-                out.append(convert_inline(rest, footnotes, report, unresolved, speaker, entry))
+                out.append(convert_inline(rest, footnotes, report, unresolved, speaker, entry, seen_refs, location, inline_rules))
+            continue
+        # Markdown 表格：保留行、列与单元格内换行，版式由作品定义。
+        table_lines = text.splitlines()
+        if (len(table_lines) >= 2 and table_lines[0].lstrip().startswith("|")
+                and re.fullmatch(r"[\s|:\-]+", table_lines[1])):
+            rows = [[c.strip() for c in line.strip().strip("|").split("|")]
+                    for line in table_lines]
+            width = len(rows[0])
+            if any(len(row) != width for row in rows):
+                unresolved.append("表格列数不一致，须核对结构")
+                continue
+            table = [r"\begin{booktable}{" + str(width) + "}"]
+            for row_number, row in enumerate(rows):
+                if row_number == 1:
+                    continue
+                cells = [convert_inline(c, footnotes, report, unresolved, seen_refs=seen_refs, location=location, inline_rules=inline_rules) for c in row]
+                if row_number == 0:
+                    cells = [r"\bookstrong{" + c + "}" for c in cells]
+                table.append(" & ".join(cells) + r" \tabularnewline")
+            table.append(r"\end{booktable}")
+            out.append("\n".join(table))
             continue
         # 结构记号本身不输出，只决定用哪个命令
         wrapper = None
@@ -395,7 +496,7 @@ def convert(
             wrapper, text = r"\bookitem{", LIST_ITEM.sub("", text)
         elif BLOCKQUOTE.match(text):
             wrapper, text = r"\booknote{", BLOCKQUOTE.sub("", text)
-        body = convert_inline(text, footnotes, report, unresolved, speaker, entry)
+        body = convert_inline(text, footnotes, report, unresolved, speaker, entry, seen_refs, location, inline_rules)
         if wrapper:
             out.append(wrapper + body + "}")
             continue
@@ -404,6 +505,23 @@ def convert(
             out.append(body + r"\par\nopagebreak")
             continue
         out.append(body)
+    output_positions.append(len(out))
+    unused = footnotes.keys() - seen_refs
+    for fid in sorted(unused):
+        reason = "仅在标题引用，须作品级排印注文" if fid in title_refs else "未使用定义，须核对跨单元注释或底本结构"
+        unresolved.append(f"[待人工确认] {definition_locations[fid]}: 脚注 [^{fid}] {reason}；注文保留在草稿源注释中")
+    # 不完整草稿保留全部定义原文及原顺序，便于作品级处理；正常结果不增加注释。
+    if unresolved:
+        if numeric_source:
+            out.append("% 待核对的源数字注释（不作为排印结果）：\n" +
+                       "\n".join("% " + line for raw in numeric_source for line in raw.splitlines()))
+        for position, text in reversed(definition_blocks):
+            comment = "% 待核对的源脚注定义（不作为排印结果）：\n"
+            comment += "\n".join("% " + line for line in text.splitlines())
+            out.insert(output_positions[position], comment)
+    unresolved = [r if r.startswith(("[阻断错误]", "[待人工确认]"))
+                  else f"[阻断错误] {path}: {r}" for r in unresolved]
+    report = [r if r.startswith(("[警告]", "[待人工确认]")) else f"[提示] {path}: {r}" for r in report]
     return "\n\n".join(out) + "\n", report, unresolved
 
 
@@ -460,11 +578,15 @@ def main() -> int:
                     help="本单元是人物志或辞典式词条表：不以冒号收尾的 **…** 作词头")
     ap.add_argument("--numeric-notes", action="store_true",
                     help="本单元的注是裸数字注号加文末「N 注文」块：按号配对转成脚注")
+    ap.add_argument("--inline-rule", action="append", default=[], metavar="UNDERSCORES",
+                    help="确认本单元内所有未转义的该完整序列均为图形横线；可重复指定。默认按字面输出，同长序列含义混用时在作品 .tex 中定位处理")
     args = ap.parse_args()
+    if any(not re.fullmatch(r"_+", rule) for rule in args.inline_rule):
+        ap.error("--inline-rule 只接受完整的连续下划线序列")
     if not args.input.is_file():
         print(f"找不到文件：{args.input}", file=sys.stderr)
         return 2
-    latex, report, unresolved = convert(args.input, args.speaker_labels, args.entry_headwords, args.numeric_notes)
+    latex, report, unresolved = convert(args.input, args.speaker_labels, args.entry_headwords, args.numeric_notes, tuple(args.inline_rule))
     if report:
         sys.stderr.write("\n转换报告（须人核）：\n" + "\n".join("  " + r for r in report) + "\n")
     if unresolved:

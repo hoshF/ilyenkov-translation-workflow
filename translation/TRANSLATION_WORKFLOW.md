@@ -7,21 +7,17 @@ type: "agent-guide"
 
 ## 职责与边界
 
-本文件只执行 [`TRANSLATION_PREPROCESSING.md`](../digitization/TRANSLATION_PREPROCESSING.md) 已建立的书籍批次，以既有 `index.json` 和 `status.json` 为任务结构。
+本流程执行 [`TRANSLATION_PREPROCESSING.md`](../digitization/TRANSLATION_PREPROCESSING.md) 已建立的书籍批次，以既有 `index.json` 和 `status.json` 为任务结构。单元、分组、批次及这两个文件的建立与重构属于预处理。单篇文章执行 [`ARTICLE_TRANSLATION_WORKFLOW.md`](ARTICLE_TRANSLATION_WORKFLOW.md)。
 
-本流程不创建或重构单元、分组、批次、`index.json` 或 `status.json`。单篇文章执行 [`ARTICLE_TRANSLATION_WORKFLOW.md`](ARTICLE_TRANSLATION_WORKFLOW.md)。
+Operator 和 Reviewer 按本流程默认执行各自步骤的分支、提交与合并，commit 绑定写入实际产生的提交。这些 Git 操作在任务指定的翻译项目仓库中进行。
 
-Owner 明确要求执行完整书籍翻译流程时，授权包括本流程规定的分支、提交和合并。仅交办调查、检查、部分翻译或规范修订，以及读取本文件，均不构成该授权；这些任务的 Git 操作依项目 `AGENTS.md`。没有相应授权时，不自行执行分支、提交或合并，不虚填 commit 绑定，也不宣告批次完成。
+Owner 授权时，可以先翻译尚未完成数字化核验的底本：将数字化原文的实际状态、未决核验风险和授权范围记入 `source-issues.json`，handoff 引用对应 issue。翻译完成只表示译文完成，原文验收和公开许可另行办理。这类批次进入 Finalization 前，取得 Owner 对该阶段的授权。
 
-Owner 明确授权时，可以先翻译尚未完成数字化核验的底本。将数字化原文的实际状态、未决核验风险和授权范围记入 `source-issues.json`，handoff 引用对应 issue，不重复登记同一问题；不得把翻译完成记作原文验收或公开许可。先行翻译授权不自动包含 Finalization，进入定稿前须有 Owner 对该阶段的明确授权。
+已有译文的指定范围校阅依 [`REVIEW_STYLE.md`](REVIEW_STYLE.md) 的「已有译文校阅入口」执行。
 
-已有译文的指定范围校阅依 [`REVIEW_STYLE.md`](REVIEW_STYLE.md) 的「已有译文校阅入口」，不反向建立本流程的批次或提交历史。
+Operator、Reviewer 开始各自工作前完整阅读本文档。
 
-Operator、Reviewer 开始各自工作前必须完整阅读本文档。
-
-本流程以**批次（batch）**为执行单位，只处理当前未完成批次。
-
-全书所有批次均达到 `translated` 后，本流程结束。后续全书统稿依 `CONSOLIDATION.md`。
+本流程以**批次（batch）**为执行单位，处理尚未完成的批次。全书所有批次均达到 `translated` 后，本流程结束，全书统稿依 `CONSOLIDATION.md`。
 
 ---
 
@@ -37,9 +33,7 @@ Operator、Reviewer 开始各自工作前必须完整阅读本文档。
 
 ### 稳定数据
 
-`index.json` 定义稳定的翻译任务结构。
-
-进入翻译流程后不得因普通翻译或审校工作修改 `index.json`。
+`index.json` 定义稳定的翻译任务结构，翻译和审校期间保持不变。
 
 `status.json` 只保存：
 
@@ -49,15 +43,11 @@ Operator、Reviewer 开始各自工作前必须完整阅读本文档。
 
 ### 已完成批次
 
-正常批次流程不得修改已经 `translated` 的批次译文。
-
-后续工作发现已完成批次存在问题时，按「问题分流」处理，不直接回改。
+已经 `translated` 的批次译文保持定稿状态。后续发现的问题按「问题分流」处理。
 
 ### 角色停止
 
-每个角色只执行自己当前步骤。
-
-完成规定的提交或裁决后必须停止，不自行进入下一角色步骤。
+每个角色执行自己当前步骤，完成规定的提交或裁决后停止，由下一角色接手。
 
 ---
 
@@ -71,7 +61,9 @@ Operator、Reviewer 开始各自工作前必须完整阅读本文档。
 
 Owner 的最终裁决高于 Operator 和 Reviewer 的建议。
 
-Reviewer 对 glossary 的新增或修改，在 Owner 裁决前不视为最终权威；具体权限与状态依 `glossary/GLOSSARY_RULES.md`。
+Reviewer 对 glossary 的新增或修改，经 Owner 裁决后成为权威；具体权限与状态依 `glossary/GLOSSARY_RULES.md`。
+
+Reviewer 由未参与当前批次 Operator 翻译的独立 Agent 或会话承担。
 
 ---
 
@@ -83,7 +75,7 @@ Reviewer 对 glossary 的新增或修改，在 Owner 裁决前不视为最终权
 | -------------------- | -------------------------------------------------- |
 | `index.json`         | 分组和 unit 结构                                   |
 | `status.json`        | 批次、状态与 commit 绑定                           |
-| `comments.md`        | 后续未翻译批次仍需知道的作品级上下文               |
+| `comments.md`        | 尚未完成的批次仍需知道的作品级上下文               |
 | `source-issues.json` | 原文、OCR 或底本问题                               |
 | `review-notes.json`  | 已完成批次中发现、留待统稿处理的具体译文或体例问题 |
 | `glossary/`          | 跨作品术语权威                                     |
@@ -99,7 +91,7 @@ Reviewer 对 glossary 的新增或修改，在 Owner 裁决前不视为最终权
 
 > Operator → Reviewer
 
-只保存当前批次翻译后仍需 Reviewer 知道的信息。
+保存当前批次翻译后 Reviewer 仍需知道的信息。
 
 `reports`：
 
@@ -107,7 +99,7 @@ Reviewer 对 glossary 的新增或修改，在 Owner 裁决前不视为最终权
 
 保存明审意见、术语变更及 Owner 最终裁决。
 
-流程结束后保留 handoff 与 reports 中当时的交接和裁决，不随当前 glossary 或译文变化改写历史。后续必要结论按问题分流追加到现有工件；不得覆盖已经闭环的裁决或 review-note，也不重复记录 Git 已保存的普通修改历史。
+流程结束后，handoff 与 reports 保留当时的交接和裁决。后续必要结论按问题分流追加到对应工件，已经闭环的裁决和 review-note 保持原样；普通修改历史以 Git 为准。
 
 ### 相关规范
 
@@ -125,7 +117,9 @@ Reviewer 对 glossary 的新增或修改，在 Owner 裁决前不视为最终权
 
 ### 正常提交序列
 
-一个批次正常产生七个提交：
+每个批次从 `main` 创建独立的 Operator 批次分支。分支名称能识别作品与批次；Owner 指定名称时依其指定。
+
+提交顺序：
 
 ```text
 translation
@@ -133,24 +127,32 @@ translation
 → blind-review
 → open-review
 → finalize
-→ merge
+→ merge（审校分支合回批次分支）
+→ merge（批次分支合回 main）
 → closeout
 ```
 
 其中：
 
 ```text
-main:
-translation ── handoff ─────────────────────── merge ── closeout
-     │                                          ╱
-     └── blind-review ── open-review ── finalize
+批次分支：translation → handoff → 接收审校合并
+审校分支：从 translation 创建 → blind-review → open-review → finalize
+main：接收批次合并 → closeout
 ```
 
-Reviewer 审校分支从 `translation` commit 创建。
+Operator 在批次分支提交 translation 和 handoff。Reviewer 从实际交付的 `translation` commit 创建审校分支，finalize 后合回批次分支。Operator 在 closeout 时将批次分支合入 `main`。
 
-Operator 随后继续在 `main` 提交 handoff。
+两次合并都使用保留 merge commit 的普通合并，merge 只汇合历史。
 
-Reviewer 的盲审分支不包含 handoff，因此最终使用正常 merge commit 汇合两条历史。
+### 并行批次与共享文件
+
+- 合并 `status.json` 时，整合相关批次的状态和绑定，保留其他批次记录。
+- 合并 `source-issues.json`、`review-notes.json` 和 glossary 时，逐条保留已登记内容及 Owner 裁决；术语权威以 Owner 裁决为准。
+- 新登记条目的编号接在 `main` 与所有在途批次分支已用编号之后；合并后按既有编号排列。
+- 编号仍然冲突时，调整尚未交接的新增条目并同步其引用；涉及已交接、已裁决或已闭环的条目，交 Owner 决定。
+- 同一问题重复登记时，合并尚未闭环的重复记录及必要位置，保留已裁决结论；已 `checked` 的 review-note 保持原样，必要的后续问题另建条目。
+- 合并冲突整合两侧已有改动；译法、身份或裁决互相冲突时，列出具体差异交 Owner。
+- 新的作品约定通过 `comments.md` 传递。已开始的其他批次在明审和 closeout 时核对适用的新约定，只处理由此产生的具体差异；已完成批次的具体问题登记 review-note。
 
 ### commit 命名
 
@@ -165,24 +167,36 @@ Reviewer 的盲审分支不包含 handoff，因此最终使用正常 merge commi
 ```text
 translation(14-b01): ...
 blind-review(14-b01): ...
+merge(14-b01): merge review branch
+merge(14-b01): merge batch branch
 closeout(14-b01): ...
 ```
+
+`merge review branch`：审校分支合回批次分支；`merge batch branch`：批次分支合入 `main`。
+
+### 补正提交
+
+已提交的内容需要补正时，追加提交，保留已有提交：
+
+- 补正仍属当前阶段、下一阶段尚未开始时，追加同类型提交；该阶段以最后一个同类型提交为实际交付版本。
+- 审校分支创建后，Operator 对当前批次译文的补正写成追加的 handoff 提交说明。open-review 提交前追加的，由 Reviewer 在明审中按 handoff 问题处理；open-review 提交后追加的，报告 Owner，由 Owner 决定交 Reviewer 追加 open-review 提交补充复核后再裁决，或在 closeout 后登记 review-note。
+- 盲审以一个 `blind-review` 提交为准；此后 Reviewer 的修改依明审和 finalize 的权限进行。
 
 ### commit 绑定
 
 `operator_commit`：
 
-> 当前批次的 `translation` commit。
+> 当前批次实际交付审校的 `translation` commit，即审校分支的起点。
 
-在后续 `handoff` commit 中写入 `status.json`。
+在 `handoff` commit 中写入 `status.json`。
 
 `reviewer_commit`：
 
-> Reviewer 分支最终合回 `main` 后产生的 `merge` commit。
+> Reviewer 审校分支完成 Finalization 后，合回当前 Operator 批次分支所产生的 `merge review branch` commit。
 
-在后续 `closeout` commit 中写入 `status.json`。
+批次分支合入 `main` 后，在 `closeout` commit 中写入 `status.json`。
 
-绑定保存相应步骤的实际提交，不换绑为最新修改或统稿提交。事实性回填须有明确提交证据，不得为补齐流程而虚填 hash。
+绑定保存相应步骤实际产生的提交，统稿和后续修改不改变绑定。事实性回填以明确的提交证据为依据。
 
 ### 状态
 
@@ -194,14 +208,12 @@ in_progress
 translated
 ```
 
-只允许：
+状态只由以下两个步骤改变：
 
 - `translation`：`untranslated → in_progress`
 - `closeout`：`in_progress → translated`
 
-其他步骤不得主动修改 `status`。
-
-`translated` 表示当前批次已按本流程完成，不表示原文已经核验、全书统稿或成书排版已经完成，也不赋予公开许可。后续发现具体问题时按问题分流处理，不因此回退批次状态。
+`translated` 表示当前批次已按本流程完成；原文核验、全书统稿、成书排版和公开许可各有其流程。后续发现具体问题时按问题分流处理，批次状态保持 `translated`。
 
 ---
 
@@ -221,11 +233,13 @@ translated
 
 #### 操作
 
-从 `status.json` 取得下一个 `untranslated` 批次，并确认：
+按 Owner 指定范围确定批次；未指定时，从当前 `main` 的 `status.json` 选择下一个 `untranslated` 批次，批次状态以 `main` 为准。确认：
 
 - group 正确；
 - batch 正确；
 - unit 与 `index.json` 一致。
+
+新批次为 `untranslated`，从 `main` 创建其 Operator 分支。批次已有工作时，确认既有分支、工件和实际阶段，从未完成的步骤继续。
 
 #### 完成
 
@@ -249,12 +263,13 @@ translated
 处理原则：
 
 - 不影响可靠翻译的，按能够确认的内容继续；
-- 有明确证据能够可靠恢复的明显错误，按原文存疑规则处理；
-- 无法可靠恢复的内容不得猜补；
-- 文本完整但事实错误时，不因常识改写原文；
-- 作者观点、用词习惯或不符合现代学科规范，不属于原文存疑。
+- 文字或著录差错有已核验底本、同书对应条目或可定位的原始文献支持时，按可靠恢复处理，记录底本位置、原值、恢复值与依据；
+- 涉及人物身份、版本选择、索引指向或多个可能恢复值时，保留可靠可译的内容，校正建议交 Owner，经批准后替换；
+- 无法可靠恢复的内容保留原状，登记后在 handoff 交接；
+- 文本完整但事实错误时照译原文，校正建议交 Owner；
+- 作者观点、用词习惯或与现代学科规范的差异按原文翻译，不属于原文存疑。
 
-只有疑点导致当前内容无法可靠翻译时才交 Owner。
+疑点导致当前内容无法可靠翻译时，先交 Owner 决定。
 
 #### 提交
 
@@ -292,7 +307,7 @@ status.json.operator_commit
 <batch_id>-handoff.md
 ```
 
-只记录 Reviewer 后续真正需要知道的信息：
+记录 Reviewer 后续需要知道的信息：
 
 - Operator 拿不准的词义、句义或翻译选择；
 - 当前选择的必要理由；
@@ -302,25 +317,18 @@ status.json.operator_commit
 例如：
 
 ```text
-原文存疑：S-013, S-014
+原文存疑：S-NNN, S-NNN
 ```
 
-不要记录：
-
-- 普通翻译过程；
-- 已经解决的问题；
-- glossary 已明确规定的内容；
-- 可以直接从 diff 得出的修改历史。
+handoff 只写上列信息。
 
 #### 提交
 
-`operator_commit` 写入和 handoff 一起提交：
+`operator_commit` 与 handoff 一起提交：
 
 ```text
 handoff(<group>-<batch>): ...
 ```
-
-不得单独增加 status 提交。
 
 #### 完成
 
@@ -332,21 +340,23 @@ Operator 停止。
 
 #### 起点
 
-从当前批次的 `translation` commit 创建独立审校分支。
+从当前批次实际交付的 `translation` commit 创建独立审校分支。
 
-#### 禁止
+#### 隔离
 
-**盲审完成前不得读取 `<batch_id>-handoff.md`。**
+**当前批次的 `<batch_id>-handoff.md` 在盲审提交后读取。**
 
 #### 读取
 
-只使用：
+盲审使用：
 
 - 当前批次原文；
 - `operator_commit` 中的译文；
 - `glossary/`；
+- `main` 上已有的 `comments.md` 及作品适用的补充规则；
 - `REVIEW_STYLE.md`；
-- `PUNCTUATION.md`。
+- `PUNCTUATION.md`；
+- 已经 `translated` 批次的译文，用于核对一致性。
 
 #### 操作
 
@@ -364,11 +374,11 @@ Operator 停止。
 
 #### rv 注释
 
-Reviewer 每一处实际修改都必须在对应 block-id 后增加：
+Reviewer 每一处实际修改都在对应 block-id 后增加：
 
 ```html
 <!-- block-id: b000012 -->
-<!-- rv: terminology | положительное знание 是既有术语，应作「实证知识」 -->
+<!-- rv: terminology | 原词 是既有术语，应作「既定译法」 -->
 ```
 
 类型：
@@ -379,7 +389,7 @@ Reviewer 每一处实际修改都必须在对应 block-id 后增加：
 | `terminology` | 术语一致性                         |
 | `preference`  | 语言表达或风格偏好                 |
 
-`rv:` 是 Owner 审核 Reviewer 实际修改的证据，不得遗漏。
+`rv:` 是 Owner 审核 Reviewer 实际修改的依据，每处修改各有一条。
 
 #### 提交
 
@@ -389,7 +399,7 @@ blind-review(<group>-<batch>): ...
 
 #### 完成
 
-只有提交完成后，才能进入第 4 步并读取 handoff。
+提交完成后进入第 4 步并读取 handoff。
 
 ---
 
@@ -397,54 +407,52 @@ blind-review(<group>-<batch>): ...
 
 #### 读取 handoff
 
-从 `main` 的 handoff commit 读取：
+从当前 Operator 批次分支最新的 handoff commit 读取：
 
 ```text
 <batch_id>-handoff.md
 ```
 
-只读取文件内容。
-
-不得：
-
-- merge handoff commit；
-- cherry-pick handoff commit。
+只读取文件内容；审校分支保持不含 handoff commit。
 
 #### 范围
 
-明审只处理：
+明审处理：
 
 - handoff 明确提出的问题；
 - 对应位置的必要上下文；
 - handoff 引出的 glossary 问题；
 - 与这些问题直接相关的必要检查。
 
-**明审不是第二次 Full Review。**
+**明审是对 handoff 的定向核对。**核对中顺带发现的其他问题，按本步骤分流写入 reports。
 
 #### 当前批次译文问题
 
-明审阶段：
+明审阶段的发现写入 reports，交 Owner；译文保持盲审提交时的状态。
 
-- 不直接修改译文；
-- 不新增 `rv:`；
-- 新发现的问题写入 reports，交 Owner。
+#### 原文疑点
+
+盲审和明审中发现的原文疑点，在本步骤查重后登记到 `source-issues.json`，reports 引用对应编号。底本无法可靠翻译，或需要校正身份、版本、回指时，按「原文存疑」交 Owner。
+
+#### 新约定与在途批次
+
+核对已合入 `main`、适用于当前内容的新作品约定及术语裁决，处理由此产生的具体差异。
+
+同组在途批次与当前批次不一致时，写入 C，注明对方批次与位置，由 Owner 一并裁决。
 
 #### glossary
 
-Reviewer 可以新增或修改 `provisional` 条目；既有 `needs_review` 条目只读使用。对已有 `approved` 译法的实质变更写入 reports 交 Owner，裁决前保留现行权威。
+Reviewer 可以新增或修改 `provisional` 条目；既有 `needs_review` 条目只读使用。对已有 `approved` 译法的实质变更写入 reports 交 Owner，裁决前沿用现行权威。
 
-所有 glossary 变更都必须写入 reports。
+全部 glossary 变更写入 reports，经 Owner 裁决后成为权威。
 
-Reviewer 的修改在 Owner 裁决前不是最终权威。
+术语建议的适用范围及多个 `approved` 条目的冲突，依 `GLOSSARY_RULES.md`「裁决范围」与「多个 approved 条目的适用判断」处理。
 
 #### 已完成批次问题
 
-若发现其他已经 `translated` 的批次存在具体译文或体例问题：
+其他已经 `translated` 的批次存在具体译文或体例问题时，登记到 `review-notes.json`。
 
-- 不修改该批次；
-- 登记到 `review-notes.json`。
-
-glossary 自身问题直接处理 glossary，不进入 `review-notes.json`。
+glossary 自身问题在 glossary 中处理。
 
 #### reports
 
@@ -454,7 +462,7 @@ glossary 自身问题直接处理 glossary，不进入 `review-notes.json`。
 <batch_id>-reports.md
 ```
 
-固定包含三部分。
+先逐条写 handoff 复核结论，再写以下三部分。
 
 ##### A. 术语变更清单
 
@@ -468,7 +476,7 @@ glossary 自身问题直接处理 glossary，不进入 `review-notes.json`。
 
 ##### B. 译文修改建议
 
-只记录明审阶段新发现、尚未进入译文的问题。
+记录明审阶段新发现、尚未进入译文的问题。
 
 每条至少写：
 
@@ -479,13 +487,13 @@ glossary 自身问题直接处理 glossary，不进入 `review-notes.json`。
 - 理由；
 - `error` / `terminology` / `preference`。
 
-盲审已经修改的内容不重复记录。
+盲审修改以 `rv:` 为准。
 
 无则写「无」。
 
 ##### C. 待裁决条目
 
-只记录 Reviewer 无法可靠决定、必须由 Owner 判断的问题。
+记录需要 Owner 判断的问题。
 
 每条至少写：
 
@@ -511,7 +519,7 @@ Reviewer 停止，等待 Owner。
 
 ### 第 5 步 — Owner 裁决
 
-Owner 只处理当前批次。
+Owner 处理当前批次。
 
 #### 审核盲审
 
@@ -536,57 +544,50 @@ Owner 只处理当前批次。
 
 #### 落实
 
-Owner 根据裁决直接：
+Owner 根据裁决直接修改，或给出书面裁决，由 Reviewer 在 finalize 中落实：
 
 - 修改当前批次译文；
 - 修改 glossary；
 - 撤回或调整 Reviewer 修改；
 - 决定 glossary 条目状态。
 
-不得因此修改其他已经 `translated` 的批次。
+涉及其他已经 `translated` 批次的问题保留在 `review-notes.json`，等待统稿。
 
-这些问题继续保留在 `review-notes.json`，等待统稿。
+术语决定写明适用范围，依 `GLOSSARY_RULES.md`「裁决范围」。原文校正决定写入对应 source issue 的 `handling`，保留底本原值和依据。
 
 #### 更新 reports
 
-在 reports 中记录：
+在 reports 末尾增加 `## D. Owner 裁决`，依次分为：
 
-- 对盲审修改的总体决定；
-- 对明审建议的决定；
-- 对待裁决条目的决定；
-- 对 glossary 变更的决定；
-- Owner 实际采取的必要修改。
+- `### 盲审修改`：对盲审修改的决定；
+- `### handoff`：对 handoff 复核结论的决定；
+- `### 明审建议`：对 B 的决定；
+- `### 待裁决条目`：对 C 的决定；
+- `### glossary`：对 glossary 变更的决定。
 
-reports 只保存裁决结果，不重复能够直接从 Git diff 得出的机械修改历史。
+Owner 实际采取的必要修改记入相应小节。reports 保存裁决结果，机械修改历史以 Git diff 为准。Owner 给出书面裁决时，D 节由 Reviewer 在 finalize 中照录。
 
 #### 完成
 
 Owner 停止。
 
-本步骤不单独提交；Owner 的最终修改由下一步 `finalize` commit 固化。
+本步骤的修改由下一步 `finalize` commit 固化。
 
 ---
 
 ### 第 6 步 — Reviewer Finalization
 
-Reviewer 在 Owner 裁决后重新接手审校分支。
-
-先行翻译未核验底本的任务，须确认 Owner 已明确授权当前 Finalization 阶段；未获授权时停止，不宣告流程完成。
+Reviewer 在 Owner 裁决后重新接手审校分支，落实裁决并清理审校标记。
 
 #### 操作
 
-1. 确认 Owner 的修改已经落入当前分支。
-2. 确认 reports 已记录必要裁决。
-3. 删除当前批次全部 `rv:`。
-4. 确认无 `rv:` 残留。
+1. 确认 Owner 的修改已经落入当前分支；已明确裁决但尚未落实的，落实该裁决。
+2. 确认 reports 已有 D 节，批次分支上 open-review 提交后追加的 handoff 已有 Owner 决定的去向。
+3. 写定当前批次全部 source issue 的 `handling`：有裁决的写裁决结论，审校确认的写确认结论。
+4. 删除当前批次全部 `rv:`。
+5. 确认无 `rv:` 残留。
 
-本阶段：
-
-- 不重新进行 Full Review；
-- 不自行新增翻译修改；
-- 不扩大检查范围。
-
-若 Owner 已明确裁决但尚未实际落实，只落实该裁决。
+本阶段的修改以 Owner 裁决为限。
 
 #### finalize 提交
 
@@ -596,16 +597,10 @@ finalize(<group>-<batch>): ...
 
 #### merge
 
-将审校分支合并回 `main`，生成正常 merge commit。
-
-merge commit：
-
-- 只汇合 handoff 历史和 Reviewer 分支历史；
-- 不额外修改文件；
-- 不附带 translation、review 或 cleanup。
+将审校分支合并回当前 Operator 批次分支，生成普通 merge commit。merge commit 只汇合 handoff 历史和审校分支历史。
 
 ```text
-merge(<group>-<batch>): ...
+merge(<group>-<batch>): merge review branch
 ```
 
 取得 merge commit hash。
@@ -618,14 +613,14 @@ Reviewer 停止。
 
 ### 第 7 步 — Operator Closeout
 
-Operator 回到 `main`。
+Closeout 核对审校结果，合入 `main` 并完成批次。
 
 #### 同步上下文
 
 取得：
 
 - `operator_commit`
-- 当前批次 merge commit hash
+- 审校分支合回批次分支的 merge commit hash
 
 先查看：
 
@@ -643,40 +638,58 @@ git diff <operator_commit>..<merge_commit>
 
 理解 Owner 裁决。
 
-本步骤不是新一轮翻译或审校。
+#### 合入 main 前
 
-#### 机械复核
+在批次分支确认：
 
-检查：
+- 审校分支已合回批次分支；
+- reports 的 D 节所列裁决已全部落实；
+- 批次分支上的全部 handoff 提交均已在 reports 中复核，或已有 Owner 决定的去向；
+- 当前批次底本与译文 block-id 序列一致，无重复、缺失或错误顺序；
+- 译文中无 `rv:`；
+- 脚注引用、定义和顺序与底本对应，图片路径可解析；
+- 相关 JSON 有效。
 
-- 当前批次底本与译文 block-id 序列一致；
-- block-id 无重复、缺失或错误顺序；
-- 译文中无 `rv:`。
+全部通过后合入 `main`；未通过的项目报告并交相应角色处理。本步骤只修复明确的流程性错误。
 
-只允许修复明确的流程性错误，不重新展开译文审校。
+#### 合入 main
+
+将批次分支正常合入 `main`：
+
+```text
+merge(<group>-<batch>): merge batch branch
+```
+
+共享文件依「并行批次与共享文件」整合。完成合并后留在 `main` 执行本步骤其余部分。
+
+#### 合入后核对
+
+在 `main` 确认：
+
+- 当前批次译文与批次分支一致，批次分支的必要提交已进入 `main`；
+- 共享文件中当前批次的记录完整，其他批次的状态、绑定、source issue、review-note 和 glossary 记录完整保留；
+- 合并后的 JSON 有效，编号唯一；
+- 已批准的 glossary 修改与作品约定已落实。
+
+存在新的语义差异或尚未落实的裁决时，报告并交相应角色处理。
+
+交接分别说明机械检查结果与本阶段实际核对的裁决落实范围，并写明未执行或未通过的检查。
 
 #### comments.md
 
-只有存在**后续未翻译批次仍需知道的信息**时才更新 `comments.md`。
+存在**尚未完成流程的批次（含 `untranslated` 和 `in_progress`）仍需知道的信息**时，更新 `comments.md`。
 
-可以记录：
+记录：
 
-- 后续必须继续遵守的特殊翻译约定；
+- 尚未完成的批次必须遵守的特殊翻译约定；已完成批次的同类问题另登记 review-note；
 - glossary 无法完整承载的作品级上下文；
 - 后续仍会遇到的特殊结构处理。
 
-不要记录：
-
-- 完整审校历史；
-- 已经解决的问题；
-- glossary 已保存的信息；
-- Git diff 已保存的历史；
-- 单句修改理由；
-- 只对已完成批次有意义的信息。
+`comments.md` 只写上列信息。
 
 #### closeout
 
-将 merge commit hash 写入：
+将审校分支合回批次分支的 merge commit hash 写入：
 
 ```text
 status.json.reviewer_commit
@@ -695,13 +708,21 @@ in_progress → translated
 closeout(<group>-<batch>): ...
 ```
 
+#### 删除批次与审校分支
+
+closeout 提交完成后，留在 `main`，确认当前批次 Operator 批次分支和 Reviewer 审校分支的全部提交均已合入 `main`，以普通删除方式删除这两个本地分支。
+
+Owner 指定整组 closeout 时，对当前组内各批次分别完成 closeout，并删除对应的本地 Operator 批次分支和 Reviewer 审校分支；不删除其他组的分支。
+
+仍有未合并提交的分支保留并报告 Owner，不强制删除。
+
 #### 完成
 
 当前批次完成。
 
-若仍有 `untranslated` 批次，下一次流程重新从第 0 步开始。
+仍有 `untranslated` 批次时，下一次流程从第 0 步开始。
 
-若全书所有批次均为 `translated`，翻译流程结束。
+全书所有批次均为 `translated` 时，翻译流程结束。
 
 ---
 
@@ -717,29 +738,26 @@ closeout(<group>-<batch>): ...
 | 原文、OCR 或底本问题                            | `source-issues.json` |
 | 跨批次统一、全书术语反向检查                    | `CONSOLIDATION.md`   |
 
-不得把同一问题重复登记到多个系统。
+每个问题登记在一个去向。
 
 ---
 
-## 6. 边界
+## 6. 统稿阶段的工作
 
-正常批次流程不执行：
+以下工作在全书统稿阶段依 `CONSOLIDATION.md` 进行：
 
 - 已完成批次回改；
 - 全书一致性修改；
 - glossary 全书反向扫描；
-- regression review；
-- 第二轮 Full Review；
-- verification of verification；
 - 全书统稿。
 
-以上属于后续统稿阶段，依 `CONSOLIDATION.md`。
+统稿以清点确认的一致性和遗留问题为修改范围；落实修改后的针对性复扫和最终复核是统稿的正常步骤。逐句全文复审，包括第二轮 Full Review、全文回归审校（regression review）和复核的复核，由 Owner 另行指定。
 
 ---
 
 ## 7. 批次完成条件
 
-一个批次只有同时满足以下条件才算完成：
+一个批次同时满足以下条件时完成：
 
 - 当前批次全部 unit 已翻译；
 - 底本与译文 block-id 对应正确；
@@ -749,9 +767,10 @@ closeout(<group>-<batch>): ...
 - Owner 已完成裁决；
 - glossary 变更已得到 Owner 处理；
 - `rv:` 已全部清除；
-- Reviewer 分支已合并回 `main`；
-- `reviewer_commit` 已绑定 merge commit；
+- 审校分支已合并回 Operator 批次分支，批次分支已合入 `main`；
+- `reviewer_commit` 已绑定审校分支合回批次分支的 merge commit；
+- 已合并的当前批次本地 Operator 批次分支和 Reviewer 审校分支均已删除；
 - 必要的后续上下文已经进入 `comments.md`；
 - `status` 为 `translated`。
 
-全书全部批次均满足以上条件后，本流程结束，并依 `CONSOLIDATION.md` 进入统稿。
+全书全部批次均满足以上条件后，本流程结束，依 `CONSOLIDATION.md` 进入统稿。

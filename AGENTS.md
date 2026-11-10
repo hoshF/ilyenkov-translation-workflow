@@ -36,6 +36,7 @@ Owner 人工维护项目。Operator 负责翻译、自查和交接；Reviewer �
 | 数字化 | [电子文本](digitization/EXISTING_DIGITAL_TEXT_WORKFLOW.md) · [数字 PDF](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) · [扫描 PDF](digitization/SCAN_DIGITIZATION_WORKFLOW.md) · [DJVU](digitization/DJVU_TEXT_LAYER_WORKFLOW.md) |
 | 成书预处理 | [成书预处理](digitization/BOOK_PREPROCESSING.md) |
 | 书籍翻译预处理 | [翻译预处理](digitization/TRANSLATION_PREPROCESSING.md) |
+| 英译中翻译、审校、统稿 | 对应流程与角色规范 · [英译中补充规则](translation/EN_ZH_PATCH.md) |
 
 文章 Operator 使用 TRANSLATION_STYLE，Reviewer 使用 REVIEW_STYLE。阶段权限、工件和停止条件按文章或书籍对应流程执行。
 
@@ -47,17 +48,17 @@ Owner 人工维护项目。Operator 负责翻译、自查和交接；Reviewer �
 
 执行前阅读 [scripts/README.md](scripts/README.md)，确认外部依赖、输入范围和输出位置。
 
+数字原生 PDF 的 Reviewer 对象审计使用 `pdf_object_audit.py`，依 [数字 PDF 流程](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) 第 4 步执行；程序输出只作候选差异。
+
 正式转换使用 `-o`，不以 shell 重定向覆盖已有成书文件。不完整草稿显式指定独立临时路径，按非零状态处理。脚本自动保护目录只覆盖其明确实现的范围，不能推定覆盖任意外部工作区。
 
 不得自行增加常驻脚本或统一调度程序。
 
 ## Git
 
-**默认不提交。** 只有明确要求时才提交。
+书籍翻译中，Operator 和 Reviewer 按[书籍流程](translation/TRANSLATION_WORKFLOW.md)默认执行各步骤的分支、提交与合并；全书统稿按[统稿](translation/CONSOLIDATION.md)默认执行其规定的建分支、提交与合并。这些 Git 操作在任务指定的翻译项目中进行。
 
-Owner 明确交办“执行完整书籍翻译流程”时，授权执行该流程规定的 Git 分支、提交与合并。该授权只作用于指定工作项目。
-
-调查、检查、部分翻译或规范修订不自动取得上述授权；阅读流程文件本身不构成授权。
+其他工作，包括调查、检查、单篇文章流程和本规范目录的维护，在 Owner 明确要求时提交。
 
 底本、字体和工作记录不因执行流程取得 Git 收录或公开许可。
 

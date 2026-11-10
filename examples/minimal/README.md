@@ -54,7 +54,7 @@
 
 练习应在本地独立副本或指定工作项目中进行，不把教学参考直接改写成生产记录。先读 [书籍翻译流程](../../translation/TRANSLATION_WORKFLOW.md)、对应角色规范和 [标点规范](../../translation/PUNCTUATION.md)。
 
-Owner 实际交办时至少指明：原文为 `source/`、译文根为练习副本的 `translation/`、术语为 `glossary/terms.json`、分组为 `01-text`、批次为 `b01` 或 `b02`，以及本次角色、授权阶段和停止条件。若交办完整书籍流程，Git 操作授权只作用于明确指定的练习项目，不能据此提交规范仓库或其他项目。
+Owner 实际交办时至少指明：原文为 `source/`、译文根为练习副本的 `translation/`、术语为 `glossary/terms.json`、分组为 `01-text`、批次为 `b01` 或 `b02`，以及本次角色、授权阶段和停止条件。书籍流程的批次分支、审校分支、提交与合并在练习项目中按主流程默认执行，练习项目须是以 `main` 为主分支的独立 Git 仓库；这些操作不在规范仓库或其他项目中执行。
 
 - Operator：在指定范围翻译，照录原文 block-id，按主流程自查、交接后停止；不代 Reviewer 或 Owner 完成后续步骤。
 - Reviewer：由未参加这次生产的独立 Agent 或会话承担；盲审前不读取 Operator handoff，也不读取示范译文。盲审后的步骤和停止条件依主流程。

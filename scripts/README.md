@@ -6,7 +6,7 @@
 
 ## 运行条件
 
-- Python 3；不同脚本还需下表中的外部程序或库。当前未建立跨平台版本兼容矩阵，不承诺所有 Python 3 版本均支持。
+- Python 3；`pdf_object_audit.py` 声明 Python ≥ 3.10，经 [`uv`](https://docs.astral.sh/uv/) 运行时按脚本头安装依赖。不同脚本还需下表中的外部程序或库。当前未建立跨平台版本兼容矩阵，不承诺所有 Python 3 版本均支持。
 - 外部命令须在 `PATH` 中可找到；本仓库不附带程序、字体或底本。
 - 命令执行成功，只证明相应程序完成了已实现的检查。语义判断、人工核验和 Owner 授权依各阶段规范。
 - 实际验证范围见本文[验证范围与限制](#验证范围与限制)；未运行的依赖不报告为已通过。
@@ -18,6 +18,10 @@
 | `djvu_text_layer.py crop` | `ddjvu`、Pillow；未提供已提取坐标时还需 `djvutxt` | DJVU、可选词坐标 | 指定图像；处理中会建立同名临时 `.pnm`／`.word.txt` |
 | `md_to_latex.py` | Python 标准库 | 一个 Markdown 文件 | 正式 `.tex`、标准输出或显式草稿 |
 | `build_book.py` | `xelatex`、`pdfinfo`、`pdffonts`；TeX 宏包、字体和资源 | 已装配的 `main.tex` 工程 | 在工程目录编译 PDF、日志及辅助文件 |
+| `pdf_object_audit.py extract` | `uv`（按脚本头声明安装 `pdfplumber`） | 数字原生 PDF、`work.json` | 指定目录的逐页字符、规线与图像对象；底本 SHA-256 不符或未登记时非零退出 |
+| `pdf_object_audit.py audit` / `show` | 同上；提取结果已存在 | 提取目录、正文 Markdown、可选 `audit.json` | 候选差异报告 `report.json`；不修改正文 |
+| `pdf_object_audit.py targets` | 同上 | 提取目录、可选 `audit.json` 与报告 | 须定向对照的页清单 `targets.json` |
+| `pdf_object_audit.py crop` | 同上，另需 Poppler 的 `pdftoppm` | PDF、页码、行内文字 | 指定 PNG 局部放大图 |
 
 ## DJVU 文本层
 
@@ -28,6 +32,8 @@ python3 scripts/djvu_text_layer.py extract 底本.djvu --out 临时目录/提取
 python3 scripts/djvu_text_layer.py rebuild 临时目录/提取 --units 单元表.json --source 底本.djvu --work-json 作品目录/work.json --out 临时目录/重建
 python3 scripts/djvu_text_layer.py crop 底本.djvu --page 1 --find 行内文字 --out 临时目录/定位.png
 ```
+
+行末连字符依 [`DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md`](../digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) 第 2 步的规则判定，同章以单元为范围；单元表的 `keep_hyphen` 给出经页面图像确认的接法，仍有歧义的保留连字符并列为待核。`standalone_lines`、`numbered_entries` 是按书版面关闭的开关；跨页续接的注文与注文首部的注标由重建识别。
 
 公开用法显式指定 `--source` 和 `--work-json`。兼容默认是输出目录中的 `work.json`，以及该登记文件同级 `source_files/<source_scan.filename>`；不在私有研究目录查找底本。参数结构见脚本末尾 `SCHEMA`。使用者提供实际单元表、修复规则和图片资源，脚本不自动决定全文结构或提取全部插图。
 
@@ -44,13 +50,29 @@ python3 scripts/md_to_latex.py 译文.md -o 临时目录/章节.tex
 python3 scripts/md_to_latex.py 译文.md --draft-output 临时目录/章节.draft.tex
 ```
 
-转换器只处理文件头列出的约定 Markdown 子集，输出 `book…` 语义命令；接收模板负责定义命令、字体、版式和资源。署名识别等规则保留俄中哲学文献实践的具体用法，不能将其理解为通用 Markdown 支持。`--speaker-labels`、`--entry-headwords` 和 `--numeric-notes` 仅在作品结构适用时启用。嵌套脚注、跨单元注释、复杂表格或未列出的 HTML／Markdown 结构没有统一完整支持，须人工检查和作品级处理。
+转换器只处理文件头列出的约定 Markdown 子集，包括 `<em>`、`<strong>`、`<br>`、`<sup>`、`<sub>` 等 HTML 样式、链接、简单表格、诗行和 Markdown 转义，输出 `book…` 语义命令及 `\href`、`\url`、`\textsuperscript`、`\textsubscript`；接收模板负责定义命令、字体、版式和资源。署名识别等规则保留俄中哲学文献实践的具体用法，不能将其理解为通用 Markdown 支持。`--speaker-labels`、`--entry-headwords` 和 `--numeric-notes` 仅在作品结构适用时启用；连续下划线默认按字面输出，`--inline-rule` 显式确认的完整序列才转为图形横线。嵌套脚注、跨单元注释、复杂表格或未列出的 HTML／Markdown 结构没有统一完整支持，须人工检查和作品级处理。
 
 正常输出使用 `-o`。脚注缺定义、数字注未解决等阻断问题出现时返回非零，不写入或覆盖正式文件。正常输出成功时会替换指定文件，因此调用者须核对目标。不要用 shell 重定向覆盖正式文件：重定向会先截断目标。
 
 `--draft-output` 必须显式指定独立、新建的 `*.draft.tex` 路径，不覆盖既有文件，不写回输入。草稿有无未决问题均非零退出，并明确报告草稿性质。它不表示完整转换成功。
 
 自动目录保护只针对**脚本所在仓库**的 `book/projects/` 和 `book/templates/`，包括解析后的路径别名；它不自动保护其他工作区的成书目录。处理外部工程时始终另选独立临时目录。
+
+## 数字 PDF 对象审计
+
+先读 [`DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md`](../digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) 第 4 步。
+
+```bash
+uv run scripts/pdf_object_audit.py extract 底本.pdf --work-json 作品目录/work.json --out 临时目录
+uv run scripts/pdf_object_audit.py audit 临时目录 --md 正文.md --config 临时目录/audit.json --out 临时目录/report.json
+uv run scripts/pdf_object_audit.py show 临时目录/report.json --category 类别
+uv run scripts/pdf_object_audit.py targets 临时目录 --config 临时目录/audit.json --report 临时目录/report.json --out 临时目录/targets.json
+uv run scripts/pdf_object_audit.py crop 底本.pdf --page N --find 行内文字 --out 临时目录/定位.png
+```
+
+`extract` 先按 `work.json` 的 `source_scan.sha256` 核对底本，再导出页面对象。`audit` 从页面对象独立推定文字、大小写、斜体、上标、断词、段落、脚注分段与条目边界，与正文 Markdown 比对，输出候选差异；`targets` 列出须定向对照渲染页面的页；`crop` 裁出含指定文字的行及上下若干行。页码范围、条目式版面及已确认的残余差异写在临时目录的 `audit.json`，格式见脚本末尾 `SCHEMA`。
+
+判据针对文字层可用的数字原生 PDF 设计，以页内正文字号、行距和字宽的相对量表述。扫描 PDF、无文字层或字形无法映射的页面不在其适用范围内。候选只作核对线索：程序退出成功不表示核验通过，候选须按页面对象和渲染页面逐条判定。
 
 ## 已装配工程编译
 
@@ -64,26 +86,31 @@ python3 scripts/build_book.py 成书工程目录
 
 编译会原地更新工程产物。教学练习先把人工示例的文本输入和装配文件放入使用者临时工程。最小示例只验证所展示的接口，不完成底本版式测量、正式字体适配或最终校阅。
 
+## 测试
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
+`tests/test_md_to_latex.py` 用临时人工输入检查转换器的脚注、数字注、表格、链接、HTML 样式、诗行、图形横线及输出保护，只依赖 Python 标准库。测试不覆盖 DJVU 重建、PDF 对象审计或 LaTeX 编译。
+
 ## 验证范围与限制
 
-2026-10-14 的一次本机验证使用 macOS、Python 3.14.7、XeTeX（TeX Live 2026）和 Poppler 26.09.0。以下记录说明实际验证范围，不作为跨平台兼容承诺。
+2026-11-10 的一次本机验证使用 macOS 15.7、Python 3.15.2、uv 0.11.7（pdfplumber 0.11.10）、XeTeX（TeX Live 2026）和 Poppler 26.10.0。以下记录说明实际验证范围，不作为跨平台兼容承诺。
 
 | 范围 | 已验证的内容 |
 | --- | --- |
-| 脚本与人工输入 | 随附三脚本语法通过；正常脚注转换成功 |
-| 输出保护 | 缺注返回非零且保留既有正式文件；独立草稿保留未决内容、返回非零并拒绝覆盖既有草稿 |
-| DJVU 重建检查 | 人工临时样本中正确 SHA 通过；摘要不符与未完成核验分别报告并非零；错误 block-id 阻断，统计差仅作候选 |
-| 教学示例 | 两单元转换及临时工程两遍编译成功；一页，无缺字及 Overfull／Underfull 诊断；已检查页面和字体路由 |
+| 脚本语法 | 四个脚本及测试文件语法解析通过 |
+| 转换器测试 | 25 项单元测试通过 |
+| 教学示例 | 两单元转换退出码为 0；临时工程两遍编译成功，一页，无缺字及 Overfull／Underfull 诊断 |
+| PDF 对象审计 | 以教学示例编译出的 PDF 为临时样本，`extract`、`audit`、`show`、`targets`、`crop` 均完成；登记摘要不符时 `extract` 非零退出 |
+| DJVU 工具 | 命令行可加载；缺少 Pillow 时 `crop` 报告依赖并非零退出 |
 
-尚未验证实际 DJVU 的 extract／crop 端到端、完整生产模板、全部特殊 Markdown 结构及跨平台环境。上述测试没有调用翻译模型，也不证明语义质量、最终校阅或公开许可。
-
-在上述环境中，执行 `from PIL import Image` 失败，输出 `ImportError: cannot import name 'Image' from 'PIL'`；当次裁图依赖未满足，因此没有报告裁图通过。这是一次环境记录，使用者仍须检查自己的 Pillow 安装。
-
-本次发布前整理重新检查了修改后的文档、文件范围、链接、示例状态和脚本语法；未重新运行 DJVU 或 LaTeX 编译。
+PDF 对象审计的样本是中文排版的教学 PDF，只证明命令链可运行和摘要核对生效，不证明对实际俄文底本的候选质量。尚未验证实际 DJVU 的 extract／rebuild／crop 端到端、实际数字原生 PDF 的审计、完整生产模板、全部特殊 Markdown 结构及跨平台环境。上述检查没有调用翻译模型，也不证明语义质量、最终校阅或公开许可。
 
 ## 第三方依赖许可
 
-本项目不分发依赖程序、宏包或字体，使用者须另行核对实际版本的许可。
+本项目不分发依赖程序、宏包或字体，使用者须另行核对实际版本的许可。`pdf_object_audit.py` 的 `pdfplumber` 及其依赖由 `uv` 在使用者环境中安装。
 
 第一版暂不收录 PDF 批注提取工具，因为其依赖 PyMuPDF 的具体分发安排尚未完成审查；该工具以后可以另行审议和恢复。PyMuPDF 官方列明 [AGPLv3 或商业许可](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright)。这一范围决定不表示 MIT 与 PyMuPDF 必然不兼容，人工 PDF 校阅和验收规则继续适用。
 

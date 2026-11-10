@@ -24,6 +24,7 @@
 | 建立翻译分组与批次 | [翻译预处理](digitization/TRANSLATION_PREPROCESSING.md) |
 | 翻译一本书或一篇文章 | [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [文章流程](translation/ARTICLE_TRANSLATION_WORKFLOW.md) |
 | 翻译与独立审阅 | [Operator 规范](translation/TRANSLATION_STYLE.md) · [Reviewer 规范](translation/REVIEW_STYLE.md) |
+| 英文底本译成中文 | [英译中补充规则](translation/EN_ZH_PATCH.md) |
 | 中文体例与术语 | [标点规范](translation/PUNCTUATION.md) · [术语规则](glossary/GLOSSARY_RULES.md) |
 | 记录问题及全书统稿 | [审阅记录](translation/REVIEW_NOTES.md) · [统稿](translation/CONSOLIDATION.md) |
 | 整理为可排版文本及校阅 | [成书规范](book/TYPESETTING.md) |
@@ -58,6 +59,7 @@ Owner 确定任务范围，裁决文本、术语和质量，决定是否验收�
 ## 实际提供的工具
 
 - DJVU 文字层导出、重建和裁图。
+- 数字原生 PDF 的页面对象审计、定向对照页清单和裁图。
 - 约定 Markdown 子集到语义 LaTeX 的转换。
 - 已装配 TeX 工程的编译及部分诊断。
 

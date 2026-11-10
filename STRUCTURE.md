@@ -94,7 +94,7 @@ unit 编号全书稳定；block-id 在各单元内编号，原文先赋号，译
   handoff.md
 ```
 
-handoff 是唯一翻译中间文件。work.json 保存作品与底本信息，不增加翻译状态或提交绑定。
+handoff 是唯一翻译中间文件。work.json 保存作品与底本信息，不增加翻译状态或提交绑定；其中 `title_zh` 保存正式中文题名，译文一级标题与之一致。
 
 文章不建立书籍的 index.json、status.json、reports、comments、source-issues 或 review-notes，不专门建立 unit 或 block-id。已有 block-id 按 [ARTICLE_TRANSLATION_WORKFLOW.md](translation/ARTICLE_TRANSLATION_WORKFLOW.md) 保留。
 
