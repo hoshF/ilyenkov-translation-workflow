@@ -13,6 +13,7 @@
 
 | 工具 | 外部条件 | 主要读取 | 写入或输出 |
 |---|---|---|---|
+| `new_project.py` | Python 标准库 | 本工作流仓库的规范、工具与示例；可选原文 Markdown | 新建项目的入口、`workflow/` 规范副本、空术语表及作品信息；已存在的文件不覆盖 |
 | `djvu_text_layer.py extract` | DjVuLibre：`djvudump`、`djvutxt` | 指定 DJVU | 指定目录的逐页文本、坐标及诊断数据 |
 | `djvu_text_layer.py rebuild` | Python 标准库；提取结果已存在 | 提取目录、单元表、底本、作品登记；可选修复/表格/图片配置 | 指定目录的单元 Markdown 和索引；确定性检查通过后才替换生成文件 |
 | `djvu_text_layer.py crop` | `ddjvu`、Pillow；未提供已提取坐标时还需 `djvutxt` | DJVU、可选词坐标 | 指定图像；处理中会建立同名临时 `.pnm`／`.word.txt` |
@@ -22,6 +23,17 @@
 | `pdf_object_audit.py audit` / `show` | 同上；提取结果已存在 | 提取目录、正文 Markdown、可选 `audit.json` | 候选差异报告 `report.json`；不修改正文 |
 | `pdf_object_audit.py targets` | 同上 | 提取目录、可选 `audit.json` 与报告 | 须定向对照的页清单 `targets.json` |
 | `pdf_object_audit.py crop` | 同上，另需 Poppler 的 `pdftoppm` | PDF、页码、行内文字 | 指定 PNG 局部放大图 |
+
+## 建立翻译项目
+
+```bash
+python3 scripts/new_project.py article 项目目录 --work-id 作品标识 --title "原文题名" --title-zh "中文题名" --source 原文.md
+python3 scripts/new_project.py book 项目目录 --work-id 作品标识 --title "原文题名"
+```
+
+项目目录不存在或为空时，写入 `AGENTS.md`、`CLAUDE.md`、`.gitignore`、`glossary/glossary.json`、`glossary/terms.json`，并把本仓库的规范、工具、模板和示例复制到 `workflow/`，在 `workflow/WORKFLOW_VERSION.txt` 记录来源提交。目录已是本工具建立的项目时，只加入作品：文章写 `translation/<work-id>/work.json`，给出 `--source` 时复制原文到 `source/<work-id>.md`；书籍写 `source/<work-id>/work.json`。`work.json` 只含命令行给出的作品信息。
+
+同一作品标识已占用 `source/<work-id>.md`、`source/<work-id>/` 或 `translation/<work-id>/` 时，或目标是其他非空目录、位于本仓库之内时，整体停止，不改动文件。`--dry-run` 只列出将要建立的文件。工具不建立翻译工件，不调用模型，不执行 Git 操作。
 
 ## DJVU 文本层
 
@@ -92,7 +104,7 @@ python3 scripts/build_book.py 成书工程目录
 python3 -B -m unittest discover -s tests
 ```
 
-`tests/test_md_to_latex.py` 用临时人工输入检查转换器的脚注、数字注、表格、链接、HTML 样式、诗行、图形横线及输出保护，只依赖 Python 标准库。测试不覆盖 DJVU 重建、PDF 对象审计或 LaTeX 编译。
+`tests/test_md_to_latex.py` 用临时人工输入检查转换器的脚注、数字注、表格、链接、HTML 样式、诗行、图形横线及输出保护；`tests/test_new_project.py` 检查初始化的文件结构、规范入口与链接、不覆盖已有文件和拒绝条件。两者只依赖 Python 标准库，不覆盖 DJVU 重建、PDF 对象审计或 LaTeX 编译。
 
 ## 验证范围与限制
 
@@ -100,13 +112,14 @@ python3 -B -m unittest discover -s tests
 
 | 范围 | 已验证的内容 |
 | --- | --- |
-| 脚本语法 | 四个脚本及测试文件语法解析通过 |
-| 转换器测试 | 25 项单元测试通过 |
+| 脚本语法 | 五个脚本及测试文件语法解析通过 |
+| 单元测试 | 转换器 25 项、项目初始化 13 项通过 |
 | 教学示例 | 两单元转换退出码为 0；临时工程两遍编译成功，一页，无缺字及 Overfull／Underfull 诊断 |
 | PDF 对象审计 | 以教学示例编译出的 PDF 为临时样本，`extract`、`audit`、`show`、`targets`、`crop` 均完成；登记摘要不符时 `extract` 非零退出 |
 | DJVU 工具 | 命令行可加载；缺少 Pillow 时 `crop` 报告依赖并非零退出 |
+| 项目初始化 | 在无 Git 的仓库副本中按 README 建立文章练习项目，按书籍示例说明建立书籍练习项目并完成初始提交；`WORKFLOW_VERSION.txt` 记为来源提交未知 |
 
-PDF 对象审计的样本是中文排版的教学 PDF，只证明命令链可运行和摘要核对生效，不证明对实际俄文底本的候选质量。尚未验证实际 DJVU 的 extract／rebuild／crop 端到端、实际数字原生 PDF 的审计、完整生产模板、全部特殊 Markdown 结构及跨平台环境。上述检查没有调用翻译模型，也不证明语义质量、最终校阅或公开许可。
+PDF 对象审计的样本是中文排版的教学 PDF，只证明命令链可运行和摘要核对生效，不证明对实际俄文底本的候选质量。尚未在 Claude Code 或 Codex 中实际运行任务指令；尚未验证实际 DJVU 的 extract／rebuild／crop 端到端、实际数字原生 PDF 的审计、完整生产模板、全部特殊 Markdown 结构及跨平台环境。上述检查没有调用翻译模型，也不证明语义质量、最终校阅或公开许可。
 
 ## 第三方依赖许可
 

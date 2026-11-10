@@ -19,6 +19,8 @@ Owner 人工维护项目。Operator 负责翻译、自查和交接；Reviewer �
 
 使用工作流时，数据位置由任务明确指定。不得到未指定的私人目录寻找底本、术语或记录。原文、译文、术语、记录和成书产物由使用者在自己的工作区维护。
 
+用 [`scripts/new_project.py`](scripts/new_project.py) 建立的翻译项目中，本目录是项目的 `workflow/`；规范中的工作区位置以项目根目录 `AGENTS.md` 的对应表为准，工具从项目根目录以 `workflow/scripts/…` 调用。
+
 规范文件是执行规则。读取规范不等于收到执行整个流程的任务。各角色完成当前步骤后停止，不自行进入下一角色。
 
 结构与工件关系依 [STRUCTURE.md](STRUCTURE.md)。

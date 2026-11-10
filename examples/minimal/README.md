@@ -54,7 +54,24 @@
 
 练习应在本地独立副本或指定工作项目中进行，不把教学参考直接改写成生产记录。先读 [书籍翻译流程](../../translation/TRANSLATION_WORKFLOW.md)、对应角色规范和 [标点规范](../../translation/PUNCTUATION.md)。
 
-Owner 实际交办时至少指明：原文为 `source/`、译文根为练习副本的 `translation/`、术语为 `glossary/terms.json`、分组为 `01-text`、批次为 `b01` 或 `b02`，以及本次角色、授权阶段和停止条件。书籍流程的批次分支、审校分支、提交与合并在练习项目中按主流程默认执行，练习项目须是以 `main` 为主分支的独立 Git 仓库；这些操作不在规范仓库或其他项目中执行。
+在工作流仓库根目录执行以下命令，建立独立的练习项目。先建立项目，再用示例的作品信息、单元、翻译分组、初始状态和候选术语替换项目初始的 `work.json` 与空术语表；`reference/` 不复制：
+
+```bash
+python3 scripts/new_project.py book ../book-practice --work-id example-observation-comparison --title "Наблюдение и сопоставление"
+cp examples/minimal/source/work.json examples/minimal/source/index.md ../book-practice/source/example-observation-comparison/
+cp -R examples/minimal/source/01-text ../book-practice/source/example-observation-comparison/
+mkdir -p ../book-practice/translation/example-observation-comparison
+cp examples/minimal/translation/index.json examples/minimal/translation/status.json ../book-practice/translation/example-observation-comparison/
+cp examples/minimal/glossary/terms.json ../book-practice/glossary/terms.json
+cd ../book-practice
+git init -b main
+git add -A
+git commit -m "Set up book translation practice"
+```
+
+此后按[任务指令模板](../../AGENT_TASKS.md)第 6—10 节逐步交办，作品为 `example-observation-comparison`。
+
+Owner 实际交办时至少指明：原文为 `source/`、译文根为练习副本的 `translation/`、术语为 `glossary/terms.json`、分组为 `01-text`、批次为 `b01` 或 `b02`，以及本次角色、授权阶段和停止条件。在上述练习项目中，原文为 `source/example-observation-comparison/`，译文根为 `translation/example-observation-comparison/`。书籍流程的批次分支、审校分支、提交与合并在练习项目中按主流程默认执行，练习项目须是以 `main` 为主分支的独立 Git 仓库；这些操作不在规范仓库或其他项目中执行。
 
 - Operator：在指定范围翻译，照录原文 block-id，按主流程自查、交接后停止；不代 Reviewer 或 Owner 完成后续步骤。
 - Reviewer：由未参加这次生产的独立 Agent 或会话承担；盲审前不读取 Operator handoff，也不读取示范译文。盲审后的步骤和停止条件依主流程。
