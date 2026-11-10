@@ -1,17 +1,17 @@
 # 更新记录
 
-## 未发布
+## 2026-11-10：以处理流程为主线
 
 - README 以处理流程为主线：数字化、预处理、翻译与审校、统稿、成书排版；快速开始先请 Agent 介绍流程并给出计划。
 - `AGENTS.md`：Owner 未指定角色和步骤时，Agent 先说明处理流程并建议到成书为止的步骤。
 - `AGENT_TASKS.md` 新增“了解流程”“数字化”“成书排版”三步。
 - 文章教学示例改名为 `examples/article/example-article.md`，作品标识 `example-article`。
 
-## v0.2.0（2026-11-10）
+## 2026-11-10：规范同步与项目初始化
 
 ### 许可
 
-- 全部内容统一以 MIT 发布，许可文件为 `LICENSE`；此前发布的版本仍适用其发布时的 CC BY 4.0（Markdown）与 MIT（代码）。
+- 全部内容统一以 MIT 发布，许可文件为 `LICENSE`；此前的提交仍适用当时的 CC BY 4.0（Markdown）与 MIT（代码）。
 
 ### 使用入口
 
@@ -35,6 +35,6 @@
 - 排版规范新增页码概念区分与 PDF 交付检查。
 - 新增 `scripts/pdf_object_audit.py`、`translation/EN_ZH_PATCH.md` 与转换器测试；更新 `md_to_latex.py`、`djvu_text_layer.py`。
 
-## v0.1.0（2026-10-14）
+## 2026-10-14：首次公开
 
 公开规范、Agent 指令、DJVU 与排版工具及最小教学示例。
