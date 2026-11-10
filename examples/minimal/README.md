@@ -1,6 +1,6 @@
 # 最小教学示例：观察与比较
 
-这是为本项目编写的俄中教学材料，不是已完成的研究项目。原文、示范译文和术语均不摘录私有作品；没有真实内部审阅记录、Owner 裁决、Git 提交或流程完成证明。许可和署名状态见[项目许可说明](../../README.md#许可与署名)。
+这是为本项目编写的俄中教学材料，不是已完成的研究项目。原文、示范译文和术语均不摘录私有作品；没有真实内部审阅记录、Owner 裁决、Git 提交或流程完成证明。许可见[项目许可说明](../../README.md#许可)。
 
 ## 阅读顺序与工件
 
@@ -69,7 +69,7 @@ git add -A
 git commit -m "Set up book translation practice"
 ```
 
-此后按[任务指令模板](../../AGENT_TASKS.md)第 6—10 节逐步交办，作品为 `example-observation-comparison`。
+此后在项目中按[任务指令](../../AGENT_TASKS.md)的「批次」各步交办，作品为 `example-observation-comparison`。
 
 Owner 实际交办时至少指明：原文为 `source/`、译文根为练习副本的 `translation/`、术语为 `glossary/terms.json`、分组为 `01-text`、批次为 `b01` 或 `b02`，以及本次角色、授权阶段和停止条件。在上述练习项目中，原文为 `source/example-observation-comparison/`，译文根为 `translation/example-observation-comparison/`。书籍流程的批次分支、审校分支、提交与合并在练习项目中按主流程默认执行，练习项目须是以 `main` 为主分支的独立 Git 仓库；这些操作不在规范仓库或其他项目中执行。
 

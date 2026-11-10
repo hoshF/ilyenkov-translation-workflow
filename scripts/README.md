@@ -33,7 +33,7 @@ python3 scripts/new_project.py book 项目目录 --work-id 作品标识 --title 
 
 项目目录不存在或为空时，写入 `AGENTS.md`、`CLAUDE.md`、`.gitignore`、`glossary/glossary.json`、`glossary/terms.json`，并把本仓库的规范、工具、模板和示例复制到 `workflow/`，在 `workflow/WORKFLOW_VERSION.txt` 记录来源提交。目录已是本工具建立的项目时，只加入作品：文章写 `translation/<work-id>/work.json`，给出 `--source` 时复制原文到 `source/<work-id>.md`；书籍写 `source/<work-id>/work.json`。`work.json` 只含命令行给出的作品信息。
 
-同一作品标识已占用 `source/<work-id>.md`、`source/<work-id>/` 或 `translation/<work-id>/` 时，或目标是其他非空目录、位于本仓库之内时，整体停止，不改动文件。`--dry-run` 只列出将要建立的文件。工具不建立翻译工件，不调用模型，不执行 Git 操作。
+同一作品标识已占用 `source/<work-id>.md`、`source/<work-id>/` 或 `translation/<work-id>/` 时，或目标是其他非空目录、位于本仓库之内时，不写入任何文件，写 stderr 并以非零状态退出。成功时不输出；`-n`（`--dry-run`）逐行列出将写入的文件。工具不建立翻译工件，不调用模型，不执行 Git 操作。
 
 ## DJVU 文本层
 

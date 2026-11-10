@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""建立独立的翻译项目，或向已有项目加入一部作品。
+"""建立翻译项目，或向已有项目加入一部作品。
 
-    python3 scripts/new_project.py article 项目目录 --work-id 作品标识 --title 原文题名 [--source 原文.md]
-    python3 scripts/new_project.py book 项目目录 --work-id 作品标识 --title 原文题名
+    new_project.py article 项目目录 --work-id ID --title 题名 [--source 原文.md]
+    new_project.py book    项目目录 --work-id ID --title 题名
 
-项目目录不存在或为空时，建立项目入口（AGENTS.md、CLAUDE.md、.gitignore）、规范副本
-workflow/、空术语表 glossary/，再加入作品。目录已是本工具建立的项目时，只加入作品。
-其他非空目录不作处理。
-
-加入作品时只写入已知的作品信息：
-  article  translation/<work-id>/work.json；给出 --source 时复制原文到 source/<work-id>.md
-  book     source/<work-id>/work.json
-
-翻译工件（index.json、status.json、handoff、reports）由后续流程按实际步骤建立。本工具不调用
-翻译模型、不推进工作阶段，也不执行 Git 操作。任何目标文件已存在时整体停止，不覆盖。
-只使用 Python 标准库。
+新项目写入 AGENTS.md、CLAUDE.md、.gitignore、空术语表和 workflow/ 规范副本；已有项目只加入作品。
+文章写 translation/ID/work.json（及 source/ID.md），书籍写 source/ID/work.json。
+目标已存在时不写入任何文件。成功时不输出；-n 列出将写入的文件。
 """
 
 from __future__ import annotations
@@ -35,7 +27,7 @@ WORK_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
 # 复制进 workflow/ 的规范、工具、模板与示例。
 WORKFLOW_ENTRIES = [
     "AGENTS.md", "STRUCTURE.md", "AGENT_TASKS.md", "README.md", "CHANGELOG.md", "SOURCE_MAP.md",
-    "LICENSE-DOCS", "LICENSE-CODE",
+    "LICENSE",
     "translation", "digitization", "glossary", "book", "scripts", "examples",
 ]
 SKIP_NAMES = {"__pycache__", ".DS_Store"}
@@ -123,7 +115,7 @@ def version_text() -> str:
         "本目录复制自 ilyenkov-translation-workflow。\n"
         f"{state}\n"
         f"复制日期：{datetime.date.today().isoformat()}\n"
-        "许可：Markdown 依 LICENSE-DOCS（CC BY 4.0）；脚本、模板与 JSON 依 LICENSE-CODE（MIT）。\n"
+        "许可：MIT，见 LICENSE。\n"
     )
 
 
@@ -159,13 +151,13 @@ def is_project(directory: Path) -> bool:
     return (directory / "AGENTS.md").is_file() and (directory / "workflow" / VERSION_FILE).is_file()
 
 
-def plan(args: argparse.Namespace, project: Path) -> tuple[bool, list[tuple[Path, object]]]:
-    """返回（是否新建项目，[(目标路径, 内容)]）。内容为 str，或表示复制来源的 Path。"""
+def plan(args: argparse.Namespace, project: Path) -> list[tuple[Path, object]]:
+    """返回 [(目标路径, 内容)]；内容为 str，或表示复制来源的 Path。"""
     if project.exists() and not project.is_dir():
         fail(f"{project} 已存在且不是目录")
     new = not project.exists() or not any(project.iterdir())
     if not new and not is_project(project):
-        fail(f"{project} 不是空目录，也不是本工具建立的翻译项目；未作处理")
+        fail(f"{project} 非空，且不是翻译项目")
 
     items: list[tuple[Path, object]] = []
     if new:
@@ -194,8 +186,8 @@ def plan(args: argparse.Namespace, project: Path) -> tuple[bool, list[tuple[Path
                   project / "translation" / args.work_id]
     taken = list(dict.fromkeys(p for p in work_paths + [p for p, _ in items] if p.exists()))
     if taken:
-        fail("以下位置已存在，未作任何修改：\n  " + "\n  ".join(str(p) for p in taken))
-    return new, items
+        fail("已存在，未写入：" + "、".join(str(p) for p in taken))
+    return items
 
 
 def write(items: list[tuple[Path, object]]) -> None:
@@ -212,7 +204,7 @@ def write(items: list[tuple[Path, object]]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("kind", choices=["article", "book"], help="article：单篇文章；book：书籍")
-    parser.add_argument("project", help="翻译项目目录，建议位于本工作流仓库之外")
+    parser.add_argument("project", help="翻译项目目录，位于工作流仓库之外")
     parser.add_argument("--work-id", required=True, help="作品标识：小写字母、数字和连字符")
     parser.add_argument("--title", required=True, help="原文题名")
     parser.add_argument("--title-zh", help="正式中文题名（单篇文章）；译文一级标题与之一致")
@@ -220,36 +212,24 @@ def main() -> None:
     parser.add_argument("--source-edition", help="所用底本的版本或出处")
     parser.add_argument("--source-url", help="来源地址")
     parser.add_argument("--source", help="单篇文章：复制到项目中的原文 Markdown 文件")
-    parser.add_argument("--dry-run", action="store_true", help="只列出将要建立的文件，不写入")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="列出将写入的文件，不写入")
     args = parser.parse_args()
 
     if not WORK_ID.fullmatch(args.work_id):
-        fail("--work-id 只能使用小写字母、数字和连字符，并以字母或数字开头")
+        fail("--work-id 只用小写字母、数字和连字符")
     if args.kind == "book" and (args.source or args.title_zh):
-        fail("book 不使用 --source 和 --title-zh；书籍底本按数字化与成书预处理流程整理")
+        fail("book 不接受 --source、--title-zh")
 
     project = Path(args.project).expanduser().resolve()
     if project == ROOT or ROOT in project.parents:
-        fail("翻译项目应位于工作流仓库之外")
+        fail("项目目录须在工作流仓库之外")
 
-    new, items = plan(args, project)
+    items = plan(args, project)
     if args.dry_run:
         for target, _ in items:
             print(target.relative_to(project))
         return
     write(items)
-
-    print(f"{'已建立项目' if new else '已加入作品'}：{project}")
-    paths = [target.relative_to(project) for target, _ in items]
-    for rel in paths:
-        if rel.parts[0] != "workflow":
-            print(f"  {rel}")
-    if new:
-        print(f"  workflow/（规范副本，{sum(rel.parts[0] == 'workflow' for rel in paths)} 个文件）")
-        print("\n下一步：")
-        print(f"  cd {project}")
-        print("  git init -b main")
-        print("  在该目录启动 Claude Code 或 Codex；任务指令见 workflow/AGENT_TASKS.md")
 
 
 if __name__ == "__main__":

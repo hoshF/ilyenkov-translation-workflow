@@ -38,6 +38,7 @@ Owner 人工维护项目。Operator 负责翻译、自查和交接；Reviewer �
 | 数字化 | [电子文本](digitization/EXISTING_DIGITAL_TEXT_WORKFLOW.md) · [数字 PDF](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) · [扫描 PDF](digitization/SCAN_DIGITIZATION_WORKFLOW.md) · [DJVU](digitization/DJVU_TEXT_LAYER_WORKFLOW.md) |
 | 成书预处理 | [成书预处理](digitization/BOOK_PREPROCESSING.md) |
 | 书籍翻译预处理 | [翻译预处理](digitization/TRANSLATION_PREPROCESSING.md) |
+| 建立翻译项目 | [工具说明](scripts/README.md#建立翻译项目)：作品标识与题名取自原文或 Owner，不能确定时先问；建立后在项目目录执行 `git init -b main` |
 | 英译中翻译、审校、统稿 | 对应流程与角色规范 · [英译中补充规则](translation/EN_ZH_PATCH.md) |
 
 文章 Operator 使用 TRANSLATION_STYLE，Reviewer 使用 REVIEW_STYLE。阶段权限、工件和停止条件按文章或书籍对应流程执行。

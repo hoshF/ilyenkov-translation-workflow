@@ -97,7 +97,7 @@ class NewProjectTests(unittest.TestCase):
         self.assertEqual((project / 'CLAUDE.md').read_text(), '@AGENTS.md\n')
         agents = (project / 'AGENTS.md').read_text()
         self.assertIn('workflow/AGENTS.md', agents)
-        for rel in ('AGENTS.md', 'STRUCTURE.md', 'AGENT_TASKS.md', 'LICENSE-DOCS', 'LICENSE-CODE',
+        for rel in ('AGENTS.md', 'STRUCTURE.md', 'AGENT_TASKS.md', 'LICENSE',
                     'translation/TRANSLATION_WORKFLOW.md', 'translation/ARTICLE_TRANSLATION_WORKFLOW.md',
                     'glossary/GLOSSARY_RULES.md', 'scripts/md_to_latex.py', 'scripts/new_project.py',
                     'WORKFLOW_VERSION.txt'):
@@ -154,6 +154,10 @@ class NewProjectTests(unittest.TestCase):
         result = self.run_tool('article', ROOT / 'tmp-project', '--work-id', 'x', '--title', 'X')
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((ROOT / 'tmp-project').exists())
+
+    def test_success_is_silent(self):
+        result = self.article(self.base / 'proj')
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, '', ''))
 
     def test_dry_run_writes_nothing(self):
         project = self.base / 'proj'

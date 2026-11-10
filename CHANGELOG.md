@@ -2,12 +2,16 @@
 
 ## 未发布
 
+### 许可
+
+- 全部内容统一以 MIT 发布，许可文件为 `LICENSE`；此前发布的版本仍适用其发布时的 CC BY 4.0（Markdown）与 MIT（代码）。
+
 ### 使用入口
 
-- README 改为面向首次使用者：快速开始、Claude Code 与 Codex 的用法、文章与书籍路径、角色关系和文档导航。
-- 新增 `scripts/new_project.py`：在工作流仓库之外建立独立的文章或书籍翻译项目，复制规范到项目的 `workflow/`，不覆盖已有文件，不执行 Git 操作。
+- 重写 README：以 Agent 为默认使用方式，只保留开始、约定、内容、依赖与许可。
+- 新增 `scripts/new_project.py`：在工作流仓库之外建立独立的文章或书籍翻译项目，复制规范到项目的 `workflow/`；成功时不输出，不覆盖已有文件，不执行 Git 操作。
 - 新增 `CLAUDE.md`，让 Claude Code 读取同一份 `AGENTS.md`。
-- 新增 `AGENT_TASKS.md`：检查项目、文章翻译与审校、书籍预处理、批次各步骤的任务指令模板。
+- 新增 `AGENT_TASKS.md`：从建立项目到统稿，每一步对 Agent 说的一句话。
 - 新增文章教学示例 `examples/article/`。
 - 新增 `tests/test_new_project.py`。
 

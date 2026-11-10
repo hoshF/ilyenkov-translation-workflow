@@ -1,6 +1,6 @@
 # 文章教学示例：比较与区别
 
-[`sravnenie-i-razlichie.md`](sravnenie-i-razlichie.md) 是为本项目新编的俄文短文，供练习单篇文章流程。它不是已发表的作品，没有示范译文、真实审阅记录或 Owner 裁决。许可和署名状态见[项目许可说明](../../README.md#许可与署名)。
+[`sravnenie-i-razlichie.md`](sravnenie-i-razlichie.md) 是为本项目新编的俄文短文，供练习单篇文章流程。它不是已发表的作品，没有示范译文、真实审阅记录或 Owner 裁决。许可见[项目许可说明](../../README.md#许可)。
 
 原文按单篇文章的形态写成：front matter 依 [`STRUCTURE.md`](../../STRUCTURE.md)，正文有引言段、两个带罗马数字编号的小节和一条注释，可以练习小节编号写法、引言标题规范化和注释编号。
 
@@ -12,4 +12,4 @@
 python3 scripts/new_project.py article ../translation-practice --work-id sravnenie-i-razlichie --title "Сравнение и различие" --title-zh "比较与区别" --source examples/article/sravnenie-i-razlichie.md
 ```
 
-此后按[任务指令模板](../../AGENT_TASKS.md)第 2—4 节进行。
+此后在项目中按[任务指令](../../AGENT_TASKS.md)的「文章」三步交办。
