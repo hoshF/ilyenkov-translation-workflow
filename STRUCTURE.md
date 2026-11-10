@@ -122,7 +122,11 @@ title / type / text_status / source_url
 
 条目沿用 id、canonical、forms、zh_preferred、zh_alternatives、status、notes；专名和体制词另有 type。forms 与 zh_alternatives 为数组，其余上述字段为字符串。
 
-状态、归属、权限和 notes 写法依 [GLOSSARY_RULES.md](glossary/GLOSSARY_RULES.md)。示例格式见 [最小示例](examples/minimal/README.md)，不将示例条目作为生产权威。
+状态、归属、权限和 notes 写法依 [GLOSSARY_RULES.md](glossary/GLOSSARY_RULES.md)。
+
+术语表可以用 [`scripts/glossary_io.py`](scripts/README.md#术语导入导出) 与交换格式互相转换。交换格式是词条数组，每条以 collection（表名）加上述字段，不含 status。导出只含 approved 词条；导入的词条写为 provisional，Owner 明确批准时写为 approved。
+
+示例格式见 [最小示例](examples/minimal/README.md)，不将示例条目作为生产权威。
 
 ## 问题、历史与当前状态
 

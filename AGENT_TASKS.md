@@ -21,6 +21,8 @@ type: "agent-guide"
 | 批次：审校 | 作为 Reviewer，按书籍流程第 3、4 步审校 〈批次〉，translation commit 为 〈hash〉；blind-review 提交前不接触该批次的 handoff。**新会话** |
 | 批次：定稿 | 作为 Reviewer，按书籍流程第 6 步定稿 〈批次〉。 |
 | 批次：收尾 | 作为 Operator，按书籍流程第 7 步完成 〈批次〉 的 closeout。 |
+| 术语导入 | 用 `glossary_io.py` 把 〈交换格式文件〉 导入 glossary/；〈写为 provisional／我批准写为 approved〉；已有相同 id 的〈停止／跳过〉。 |
+| 术语导出 | 用 `glossary_io.py` 把 glossary/ 的 approved 词条导出为 〈文件〉。 |
 | 统稿 | 全书批次完成后，按统稿流程处理 〈work-id〉。 |
 | 成书排版 | 按成书规范把 〈work-id〉 的定稿译文转为 LaTeX，编译校样并报告检查结果。 |
 

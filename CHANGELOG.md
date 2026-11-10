@@ -1,5 +1,10 @@
 # 更新记录
 
+## 2026-11-10：术语导入导出
+
+- 新增 `scripts/glossary_io.py`：把术语表导出为交换格式（只含 approved 词条），或把交换格式导入术语表（写为 provisional，Owner 批准时写为 approved）；交换格式与小组网站发布的术语文件一致。
+- 新增 `tests/test_glossary_io.py`。
+
 ## 2026-11-10：以处理流程为主线
 
 - README 以处理流程为主线：数字化、预处理、翻译与审校、统稿、成书排版；快速开始先请 Agent 介绍流程并给出计划。

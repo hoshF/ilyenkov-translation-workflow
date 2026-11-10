@@ -103,7 +103,7 @@ claude    # 或 codex
 | --- | --- |
 | 数字化 | [电子文本](digitization/EXISTING_DIGITAL_TEXT_WORKFLOW.md) · [数字 PDF](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) · [扫描 PDF](digitization/SCAN_DIGITIZATION_WORKFLOW.md) · [DJVU](digitization/DJVU_TEXT_LAYER_WORKFLOW.md) |
 | 预处理 | [成书预处理](digitization/BOOK_PREPROCESSING.md) · [翻译预处理](digitization/TRANSLATION_PREPROCESSING.md) |
-| 翻译与审校 | [文章流程](translation/ARTICLE_TRANSLATION_WORKFLOW.md) · [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [Operator](translation/TRANSLATION_STYLE.md) · [Reviewer](translation/REVIEW_STYLE.md) · [标点](translation/PUNCTUATION.md) · [术语](glossary/GLOSSARY_RULES.md) · [英译中](translation/EN_ZH_PATCH.md) |
+| 翻译与审校 | [文章流程](translation/ARTICLE_TRANSLATION_WORKFLOW.md) · [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [Operator](translation/TRANSLATION_STYLE.md) · [Reviewer](translation/REVIEW_STYLE.md) · [标点](translation/PUNCTUATION.md) · [术语](glossary/GLOSSARY_RULES.md)（[导入导出](scripts/README.md#术语导入导出)） · [英译中](translation/EN_ZH_PATCH.md) |
 | 统稿 | [统稿](translation/CONSOLIDATION.md) · [审阅记录](translation/REVIEW_NOTES.md) |
 | 成书排版 | [成书规范](book/TYPESETTING.md) |
 | 全程 | [AGENTS.md](AGENTS.md)：Agent 权限与 Git 规则 · [STRUCTURE.md](STRUCTURE.md)：项目文件 · [scripts/](scripts/README.md)：工具 |

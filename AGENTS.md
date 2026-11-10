@@ -35,7 +35,7 @@ Owner 没有指定角色和步骤时，先说明处理流程（数字化、预�
 | 书籍翻译 | [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [Operator 规范](translation/TRANSLATION_STYLE.md) · [标点](translation/PUNCTUATION.md) |
 | 书籍审校 | [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [Reviewer 规范](translation/REVIEW_STYLE.md) · [审阅记录](translation/REVIEW_NOTES.md) · [标点](translation/PUNCTUATION.md) |
 | 统稿 | [统稿](translation/CONSOLIDATION.md) · [审阅记录](translation/REVIEW_NOTES.md) |
-| 术语 | [术语规则](glossary/GLOSSARY_RULES.md) |
+| 术语 | [术语规则](glossary/GLOSSARY_RULES.md)；导入导出见[工具说明](scripts/README.md#术语导入导出) |
 | 排版成书 | [成书规范](book/TYPESETTING.md) |
 | 数字化 | [电子文本](digitization/EXISTING_DIGITAL_TEXT_WORKFLOW.md) · [数字 PDF](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) · [扫描 PDF](digitization/SCAN_DIGITIZATION_WORKFLOW.md) · [DJVU](digitization/DJVU_TEXT_LAYER_WORKFLOW.md) |
 | 成书预处理 | [成书预处理](digitization/BOOK_PREPROCESSING.md) |

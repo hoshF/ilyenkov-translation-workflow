@@ -14,6 +14,8 @@
 | 工具 | 外部条件 | 主要读取 | 写入或输出 |
 |---|---|---|---|
 | `new_project.py` | Python 标准库 | 本工作流仓库的规范、工具与示例；可选原文 Markdown | 新建项目的入口、`workflow/` 规范副本、空术语表及作品信息；已存在的文件不覆盖 |
+| `glossary_io.py export` | Python 标准库 | 术语目录或术语表文件 | 标准输出：approved 词条的交换格式数组 |
+| `glossary_io.py import` | Python 标准库 | 交换格式文件或标准输入、术语目录 | 向同名术语表追加词条；已有相同 id 时不写入 |
 | `djvu_text_layer.py extract` | DjVuLibre：`djvudump`、`djvutxt` | 指定 DJVU | 指定目录的逐页文本、坐标及诊断数据 |
 | `djvu_text_layer.py rebuild` | Python 标准库；提取结果已存在 | 提取目录、单元表、底本、作品登记；可选修复/表格/图片配置 | 指定目录的单元 Markdown 和索引；确定性检查通过后才替换生成文件 |
 | `djvu_text_layer.py crop` | `ddjvu`、Pillow；未提供已提取坐标时还需 `djvutxt` | DJVU、可选词坐标 | 指定图像；处理中会建立同名临时 `.pnm`／`.word.txt` |
@@ -34,6 +36,19 @@ python3 scripts/new_project.py book 项目目录 --work-id 作品标识 --title 
 项目目录不存在或为空时，写入 `AGENTS.md`、`CLAUDE.md`、`.gitignore`、`glossary/glossary.json`、`glossary/terms.json`，并把本仓库的规范、工具、模板和示例复制到 `workflow/`，在 `workflow/WORKFLOW_VERSION.txt` 记录来源提交。目录已是本工具建立的项目时，只加入作品：文章写 `translation/<work-id>/work.json`，给出 `--source` 时复制原文到 `source/<work-id>.md`；书籍写 `source/<work-id>/work.json`。`work.json` 只含命令行给出的作品信息。
 
 同一作品标识已占用 `source/<work-id>.md`、`source/<work-id>/` 或 `translation/<work-id>/` 时，或目标是其他非空目录、位于本仓库之内时，不写入任何文件，写 stderr 并以非零状态退出。成功时不输出；`-n`（`--dry-run`）逐行列出将写入的文件。工具不建立翻译工件，不调用模型，不执行 Git 操作。
+
+## 术语导入导出
+
+```bash
+python3 scripts/glossary_io.py export glossary/ > glossary-export.json
+python3 scripts/glossary_io.py import glossary-export.json glossary/
+```
+
+交换格式是词条数组，每条字段依次为 `collection`、`id`、`canonical`、`forms`、`zh_preferred`、`zh_alternatives`、`notes`；`collection` 为 `glossary` 时另有 `type`（`person`、`organization`、`institution`、`work`、`journal`）。`collection` 是术语表文件名去掉 `.json`。交换格式不含 `status`。
+
+`export` 读取目录中的全部 `.json`，按 `glossary`、`terms`、其余表名的顺序输出，也可以指定文件并按指定顺序输出。只输出 `approved` 词条；这些词条的字段不符合交换格式时不输出并以非零状态退出。
+
+`import` 把词条追加到术语目录中与 `collection` 同名的表，表不存在时新建。词条写为 `provisional`，依 [术语表规则](../glossary/GLOSSARY_RULES.md) 等待 Owner 审定；`--approved` 写为 `approved`，只在 Owner 明确批准这些词条作为本项目权威时使用。输入有未知字段、字段无效或重复，或同一表中已有相同 `id` 时，不写入任何文件；`--skip-existing` 跳过已有 `id` 的词条。输入文件为 `-` 时读取标准输入。成功时不输出；`-n` 逐行列出将写入的 `collection/id`。
 
 ## DJVU 文本层
 
@@ -104,7 +119,7 @@ python3 scripts/build_book.py 成书工程目录
 python3 -B -m unittest discover -s tests
 ```
 
-`tests/test_md_to_latex.py` 用临时人工输入检查转换器的脚注、数字注、表格、链接、HTML 样式、诗行、图形横线及输出保护；`tests/test_new_project.py` 检查初始化的文件结构、规范入口与链接、不覆盖已有文件和拒绝条件。两者只依赖 Python 标准库，不覆盖 DJVU 重建、PDF 对象审计或 LaTeX 编译。
+`tests/test_md_to_latex.py` 用临时人工输入检查转换器的脚注、数字注、表格、链接、HTML 样式、诗行、图形横线及输出保护；`tests/test_new_project.py` 检查初始化的文件结构、规范入口与链接、不覆盖已有文件和拒绝条件。`tests/test_glossary_io.py` 检查交换格式、导出范围与顺序、导入状态、冲突与输入校验。这些测试只依赖 Python 标准库，不覆盖 DJVU 重建、PDF 对象审计或 LaTeX 编译。
 
 ## 验证范围与限制
 
@@ -112,8 +127,9 @@ python3 -B -m unittest discover -s tests
 
 | 范围 | 已验证的内容 |
 | --- | --- |
-| 脚本语法 | 五个脚本及测试文件语法解析通过 |
-| 单元测试 | 转换器 25 项、项目初始化 13 项通过 |
+| 脚本语法 | 六个脚本及测试文件语法解析通过 |
+| 单元测试 | 转换器 25 项、项目初始化 14 项、术语导入导出 9 项通过 |
+| 术语导入导出 | 以小组实际术语表导出，结果与小组网站发布的术语交换文件完全一致（244 条，含顺序）；把该文件以 `--approved` 导入空目录，还原出与原表 approved 词条相同的 9 个表 |
 | 教学示例 | 两单元转换退出码为 0；临时工程两遍编译成功，一页，无缺字及 Overfull／Underfull 诊断 |
 | PDF 对象审计 | 以教学示例编译出的 PDF 为临时样本，`extract`、`audit`、`show`、`targets`、`crop` 均完成；登记摘要不符时 `extract` 非零退出 |
 | DJVU 工具 | 命令行可加载；缺少 Pillow 时 `crop` 报告依赖并非零退出 |
