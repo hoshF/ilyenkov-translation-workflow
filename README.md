@@ -87,6 +87,33 @@ claude    # 或 codex
 | 记录可查 | 原文、译文、交接、裁决和术语都以 Markdown 或 JSON 保存在项目中，可以追溯每处处理的依据 |
 | 版本固定 | 每个项目在 `workflow/` 中保存建立时的规范副本，工作流以后的更新不影响进行中的项目 |
 
+## 术语表
+
+每个项目的 `glossary/` 保存三类术语表：
+
+| 文件 | 收录 |
+| --- | --- |
+| `glossary.json` | 人名、机构、著作、刊物等专名和体制词 |
+| `terms.json` | 通用学科术语 |
+| `<作者>.json` | 某位作者的理论概念，如 `ilyenkov.json` |
+
+每个词条记录原词及其词形、中文主译与其他译法、说明和状态。翻译和审校中提出的新词条是候选（`provisional`），Owner 审定后成为权威译法（`approved`）；审校和统稿按 `approved` 词条核对译文。
+
+术语表可以导入和导出，交换格式与小组网站发布的 [glossary.json](https://ilyenkov.cn/glossary.json) 相同。例如在项目中导入小组已审定的术语：
+
+```bash
+curl -o tmp/glossary.json --create-dirs https://ilyenkov.cn/glossary.json
+python3 workflow/scripts/glossary_io.py import tmp/glossary.json glossary/
+```
+
+导入的词条写为候选，是否采用仍由 Owner 决定。导出本项目已审定的术语：
+
+```bash
+python3 workflow/scripts/glossary_io.py export glossary/ > glossary-export.json
+```
+
+规则见[术语表规则](glossary/GLOSSARY_RULES.md)，选项见[工具说明](scripts/README.md#术语导入导出)。
+
 ## 文档
 
 先读：
