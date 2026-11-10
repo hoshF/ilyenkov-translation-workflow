@@ -1,5 +1,12 @@
 # 更新记录
 
+## 未发布
+
+- README 以处理流程为主线：数字化、预处理、翻译与审校、统稿、成书排版；快速开始先请 Agent 介绍流程并给出计划。
+- `AGENTS.md`：Owner 未指定角色和步骤时，Agent 先说明处理流程并建议到成书为止的步骤。
+- `AGENT_TASKS.md` 新增“了解流程”“数字化”“成书排版”三步。
+- 文章教学示例改名为 `examples/article/example-article.md`，作品标识 `example-article`。
+
 ## v0.2.0（2026-11-10）
 
 ### 许可

@@ -2,32 +2,39 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-这是一套面向哲学文献的 Agent 辅助翻译工作流，由中文伊里因科夫小组在俄译中哲学文献的数字化、翻译、审校和成书实践中逐步形成。
+这是一套面向哲学文献的 Agent 辅助处理工作流，把一部外文文献从原始底本带到中文定稿和成书：数字化、预处理、翻译与审校、统稿、排版。它由中文伊里因科夫小组在俄译中哲学文献的实践中逐步形成。
 
-工作流通过文本规范、角色分工和辅助工具，组织从原文准备到译文定稿的各个环节。Agent 分别承担翻译、独立审校和检查任务；人类 Owner 负责交办任务、裁决疑难问题并决定最终文本。
+工作流通过文本规范、角色分工和辅助工具组织各个环节。Agent 分别承担整理、翻译、独立审校和检查任务；人类 Owner 交办任务、裁决疑难问题并决定最终文本。
 
-仓库不内置翻译模型，也不提供自动化的 Agent 调度。使用者通过 Claude Code、Codex 等本地 Agent 执行任务；原文、译文、术语和审校记录都保存在使用者自己的翻译项目中。
+仓库不内置翻译模型，也不提供自动化的 Agent 调度。使用者通过 Claude Code、Codex 等本地 Agent 执行任务；底本、原文、译文、术语和审校记录都保存在使用者自己的项目中。
 
-## 工作方式
+## 处理流程
 
-以单篇文章为例：
+| 阶段 | 做什么 | 产出 |
+| --- | --- | --- |
+| 1. 数字化 | 把电子文本、数字 PDF、扫描 PDF 或 DJVU 整理为 Markdown，逐项核验 | 核验过的原文 |
+| 2. 预处理 | 书籍拆分单元、编排 block-id，再划分翻译分组与批次 | 单元文件、批次表 |
+| 3. 翻译与审校 | Operator 翻译并交接，Reviewer 独立盲审与明审，Owner 裁决，Reviewer 定稿 | 定稿译文、交接与裁决记录 |
+| 4. 统稿 | 书籍各批次完成后，核对全书术语与体例的一致性 | 统稿记录 |
+| 5. 成书排版 | 定稿译文转为 LaTeX，编译并检查校样 | PDF |
 
-| 角色 | 做什么 |
-| --- | --- |
-| Operator（Agent） | 翻译原文、自查，把拿不准的问题写进交接记录 |
-| Reviewer（另一个 Agent 会话） | 先不看交接独立盲审，再读交接定向明审 |
-| Owner（人） | 裁决译文、术语和未决问题 |
-| Reviewer | 落实裁决，完成定稿检查 |
+单篇文章不需要第 2、4 步：全部工作记录在一份 `handoff.md` 中，也不用分支和批次。书籍按批次在 Git 分支上翻译和审校。各阶段的规范见[文档](#文档)。
 
-Reviewer 与 Operator 不共用会话，盲审在读到译者的交接之前完成；所有疑难最终由人裁决。这两点是这套工作流与一般 AI 翻译提示词的主要区别。
+### 角色
 
-文章的全部工作记录在一份 `handoff.md` 中，不需要分支和批次。书籍另有预处理（单元与 block-id）、按批次的 Git 分支审校、批次收尾和全书统稿。详见[文章流程](translation/ARTICLE_TRANSLATION_WORKFLOW.md)和[书籍流程](translation/TRANSLATION_WORKFLOW.md)。
+| 角色 | 承担者 | 职责 |
+| --- | --- | --- |
+| Operator | Agent | 整理底本、翻译、自查，把拿不准的问题写进交接 |
+| Reviewer | 另一个 Agent 会话 | 先不看交接独立盲审，再读交接定向明审；落实裁决后定稿 |
+| Owner | 人 | 交办与授权；裁决译法、原文疑点和术语；验收 |
+
+Reviewer 与 Operator 不共用会话，盲审在读到交接之前完成；所有疑难最终由人裁决。这两点是这套工作流与一般 AI 翻译提示词的主要区别。
 
 ## 快速开始
 
-需要先安装一个能读取项目文件、执行命令的本地 Agent，例如 Claude Code 或 Codex。
+需要一个能读取项目文件、执行命令的本地 Agent，例如 Claude Code 或 Codex。
 
-**1. 下载工作流，在工作流仓库中启动 Agent**
+### 1. 下载工作流并启动 Agent
 
 ```bash
 git clone https://github.com/hoshF/ilyenkov-translation-workflow.git
@@ -35,38 +42,50 @@ cd ilyenkov-translation-workflow
 claude    # 或 codex
 ```
 
-**2. 让 Agent 建立翻译项目**
+### 2. 了解流程，制定计划
 
-翻译项目是工作流仓库之外的另一个目录，有自己的文件和 Git 历史。下面用随附的教学原文：
+先让 Agent 说明处理流程，并按你手头的底本给出步骤建议：
 
 ```text
-按 AGENTS.md 和 scripts/README.md，使用 examples/article/sravnenie-i-razlichie.md
-在 ../my-translation 创建文章翻译项目。
-作品标识：sravnenie-i-razlichie
-原文题名：Сравнение и различие
-中文题名：比较与区别
-在新项目中初始化独立 Git 仓库，主分支为 main。
-只完成项目初始化，不开始翻译。
+按 AGENTS.md 介绍这套工作流的处理流程。
+我要处理〈一本扫描 PDF 的俄文书／一篇网页上的文章〉，
+请建议从数字化到成书的步骤，以及每一步需要我决定什么。先不建立文件。
 ```
 
-**3. 在翻译项目中逐步交办**
+### 3. 建立项目
+
+翻译项目是工作流仓库之外的另一个目录，有自己的文件和 Git 历史。下面用随附的教学示例：
+
+```text
+按 AGENTS.md 和 scripts/README.md，使用 examples/article/example-article.md
+在 ../example-translation 建立文章翻译项目。
+作品标识：example-article
+原文题名：Сравнение и различие
+中文题名：比较与区别
+在新项目中初始化独立 Git 仓库，主分支为 main。只建立项目，不开始翻译。
+```
+
+### 4. 在项目中逐步交办
 
 ```bash
-cd ../my-translation
+cd ../example-translation
 claude    # 或 codex
 ```
 
-按 [AGENT_TASKS.md](AGENT_TASKS.md)（项目中为 `workflow/AGENT_TASKS.md`）一次交办一步，例如先说“作为 Operator，按文章流程第 1 步翻译 sravnenie-i-razlichie”。审校时另开一个会话。
+先说“检查 example-article 处于哪一步，列出到成书为止的剩余步骤”，再按 [AGENT_TASKS.md](AGENT_TASKS.md)（项目中为 `workflow/AGENT_TASKS.md`）一次交办一步。审校时另开一个会话。
 
-教学原文尚未完成底本核验。练习翻译时，在指令中写明授权先行翻译未核验底本；进入定稿时再另行授权。
+> [!NOTE]
+> 教学示例的原文没有经过底本核验。练习翻译时，在指令中写明“授权先行翻译未核验底本”；定稿时再另行授权。
 
 ## 核心约定
 
-- **一次一个角色、一个步骤。** Agent 完成当前步骤后停下，下一步由 Owner 交办。
-- **审校独立。** Reviewer 由未参与翻译的会话担任，盲审完成前不看 Operator 的交接。
-- **人做决定。** 译法、原文疑点和术语的最终结论由 Owner 裁决；只有 Owner 批准的术语是权威译法。
-- **记录可查。** 译文、交接、裁决和术语决定都以 Markdown 或 JSON 保存在项目中，可以追溯每处处理的依据。
-- **版本固定。** 每个翻译项目在 `workflow/` 中保存建立时的规范副本，工作流以后的更新不影响进行中的项目。
+| 约定 | 含义 |
+| --- | --- |
+| 一次一步 | Agent 一次担任一个角色、执行一个步骤，完成后停下，下一步由 Owner 交办 |
+| 审校独立 | Reviewer 由未参与翻译的会话担任，盲审完成前不看 Operator 的交接 |
+| 人做决定 | 译法、原文疑点和术语由 Owner 裁决；只有 Owner 批准的术语是权威译法 |
+| 记录可查 | 原文、译文、交接、裁决和术语都以 Markdown 或 JSON 保存在项目中，可以追溯每处处理的依据 |
+| 版本固定 | 每个项目在 `workflow/` 中保存建立时的规范副本，工作流以后的更新不影响进行中的项目 |
 
 ## 文档
 
@@ -74,21 +93,20 @@ claude    # 或 codex
 
 | 文档 | 内容 |
 | --- | --- |
-| [AGENT_TASKS.md](AGENT_TASKS.md) | 每一步对 Agent 说的一句话 |
+| [AGENT_TASKS.md](AGENT_TASKS.md) | 从了解流程到成书排版，每一步对 Agent 说的一句话 |
 | [examples/article/](examples/article/README.md) | 文章教学示例 |
 | [examples/minimal/](examples/minimal/README.md) | 书籍教学示例：两个批次 |
 
-需要时查阅：
+按阶段查阅：
 
-| 文档 | 内容 |
+| 阶段 | 文档 |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Agent 的权限、Git 规则，以及每类任务要读哪些规范 |
-| [STRUCTURE.md](STRUCTURE.md) | 翻译项目中的文件及各自保存什么 |
-| [translation/](translation/) | 翻译、审校、统稿、标点规范；[英译中补充规则](translation/EN_ZH_PATCH.md) |
-| [glossary/](glossary/GLOSSARY_RULES.md) | 术语规则 |
-| [digitization/](digitization/) | 电子文本、数字 PDF、扫描 PDF、DJVU 的数字化，以及成书与翻译预处理 |
-| [book/](book/TYPESETTING.md) | 排版规范与最小模板 |
-| [scripts/](scripts/README.md) | 项目初始化、数字化、转换与编译工具 |
+| 数字化 | [电子文本](digitization/EXISTING_DIGITAL_TEXT_WORKFLOW.md) · [数字 PDF](digitization/DIGITAL_PDF_RECONSTRUCTION_WORKFLOW.md) · [扫描 PDF](digitization/SCAN_DIGITIZATION_WORKFLOW.md) · [DJVU](digitization/DJVU_TEXT_LAYER_WORKFLOW.md) |
+| 预处理 | [成书预处理](digitization/BOOK_PREPROCESSING.md) · [翻译预处理](digitization/TRANSLATION_PREPROCESSING.md) |
+| 翻译与审校 | [文章流程](translation/ARTICLE_TRANSLATION_WORKFLOW.md) · [书籍流程](translation/TRANSLATION_WORKFLOW.md) · [Operator](translation/TRANSLATION_STYLE.md) · [Reviewer](translation/REVIEW_STYLE.md) · [标点](translation/PUNCTUATION.md) · [术语](glossary/GLOSSARY_RULES.md) · [英译中](translation/EN_ZH_PATCH.md) |
+| 统稿 | [统稿](translation/CONSOLIDATION.md) · [审阅记录](translation/REVIEW_NOTES.md) |
+| 成书排版 | [成书规范](book/TYPESETTING.md) |
+| 全程 | [AGENTS.md](AGENTS.md)：Agent 权限与 Git 规则 · [STRUCTURE.md](STRUCTURE.md)：项目文件 · [scripts/](scripts/README.md)：工具 |
 
 ## 运行环境
 

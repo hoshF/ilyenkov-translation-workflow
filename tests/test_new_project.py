@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / 'scripts/new_project.py'
-ARTICLE = ROOT / 'examples/article/sravnenie-i-razlichie.md'
+ARTICLE = ROOT / 'examples/article/example-article.md'
 LINK = re.compile(r'\]\(([^)\s]+)\)')
 
 
@@ -42,7 +42,7 @@ class NewProjectTests(unittest.TestCase):
                               capture_output=True, text=True, cwd=cwd)
 
     def article(self, project, *extra):
-        return self.run_tool('article', project, '--work-id', 'sravnenie-i-razlichie',
+        return self.run_tool('article', project, '--work-id', 'example-article',
                              '--title', 'Сравнение и различие', '--title-zh', '比较与区别',
                              '--source', ARTICLE, *extra)
 
@@ -56,13 +56,13 @@ class NewProjectTests(unittest.TestCase):
         self.assertEqual(self.outside_workflow(project), {
             Path('AGENTS.md'), Path('CLAUDE.md'), Path('.gitignore'),
             Path('glossary/glossary.json'), Path('glossary/terms.json'),
-            Path('source/sravnenie-i-razlichie.md'),
-            Path('translation/sravnenie-i-razlichie/work.json'),
+            Path('source/example-article.md'),
+            Path('translation/example-article/work.json'),
         })
-        work = json.loads((project / 'translation/sravnenie-i-razlichie/work.json').read_text())
-        self.assertEqual(work, {'work_id': 'sravnenie-i-razlichie', 'title': 'Сравнение и различие',
+        work = json.loads((project / 'translation/example-article/work.json').read_text())
+        self.assertEqual(work, {'work_id': 'example-article', 'title': 'Сравнение и различие',
                                 'title_zh': '比较与区别'})
-        self.assertEqual((project / 'source/sravnenie-i-razlichie.md').read_bytes(), ARTICLE.read_bytes())
+        self.assertEqual((project / 'source/example-article.md').read_bytes(), ARTICLE.read_bytes())
         for name in ('glossary.json', 'terms.json'):
             self.assertEqual(json.loads((project / 'glossary' / name).read_text()), [])
 
@@ -117,7 +117,7 @@ class NewProjectTests(unittest.TestCase):
     def test_add_work_keeps_existing_files(self):
         project = self.base / 'proj'
         self.assertEqual(self.article(project).returncode, 0)
-        (project / 'translation/sravnenie-i-razlichie/handoff.md').write_text('用户已有的交接\n')
+        (project / 'translation/example-article/handoff.md').write_text('用户已有的交接\n')
         before = snapshot(project)
         result = self.run_tool('article', project, '--work-id', 'second', '--title', 'Второй')
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -130,7 +130,7 @@ class NewProjectTests(unittest.TestCase):
         self.assertEqual(self.article(project).returncode, 0)
         before = snapshot(project)
         for kind, extra in (('article', ['--source', ARTICLE]), ('book', [])):
-            result = self.run_tool(kind, project, '--work-id', 'sravnenie-i-razlichie', '--title', 'X', *extra)
+            result = self.run_tool(kind, project, '--work-id', 'example-article', '--title', 'X', *extra)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('已存在', result.stderr)
         self.assertEqual(snapshot(project), before)
@@ -163,7 +163,7 @@ class NewProjectTests(unittest.TestCase):
         project = self.base / 'proj'
         result = self.article(project, '--dry-run')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('translation/sravnenie-i-razlichie/work.json', result.stdout)
+        self.assertIn('translation/example-article/work.json', result.stdout)
         self.assertFalse(project.exists())
 
     def test_invalid_input_is_refused(self):
