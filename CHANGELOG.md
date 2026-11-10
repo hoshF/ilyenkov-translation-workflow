@@ -1,6 +1,6 @@
 # 更新记录
 
-## 未发布
+## v0.2.0（2026-11-10）
 
 ### 许可
 
@@ -8,14 +8,14 @@
 
 ### 使用入口
 
-- 重写 README：以 Agent 为默认使用方式，只保留开始、约定、内容、依赖与许可。
+- 重写 README：面向首次使用者，说明工作方式、快速开始、核心约定与文档导航。
 - 新增 `scripts/new_project.py`：在工作流仓库之外建立独立的文章或书籍翻译项目，复制规范到项目的 `workflow/`；成功时不输出，不覆盖已有文件，不执行 Git 操作。
 - 新增 `CLAUDE.md`，让 Claude Code 读取同一份 `AGENTS.md`。
 - 新增 `AGENT_TASKS.md`：从建立项目到统稿，每一步对 Agent 说的一句话。
 - 新增文章教学示例 `examples/article/`。
 - 新增 `tests/test_new_project.py`。
 
-## 2026-11-10：规范同步
+### 规范同步
 
 同步小组实践中的现行规范与工具。
 
@@ -28,6 +28,6 @@
 - 排版规范新增页码概念区分与 PDF 交付检查。
 - 新增 `scripts/pdf_object_audit.py`、`translation/EN_ZH_PATCH.md` 与转换器测试；更新 `md_to_latex.py`、`djvu_text_layer.py`。
 
-## 2026-10-14：首次公开
+## v0.1.0（2026-10-14）
 
 公开规范、Agent 指令、DJVU 与排版工具及最小教学示例。
